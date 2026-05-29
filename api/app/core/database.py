@@ -1,19 +1,10 @@
 from tortoise import Tortoise
 from app.core.config import settings
 
-# Tortoise ORM 0.21 генерирует INT PRIMARY KEY для SQLite,
-# но SQLite требует INTEGER PRIMARY KEY для автоинкремента.
-# Создаём таблицы вручную с правильной схемой.
+SCHEMA_MIGRATIONS_TABLE = "_migrations"
 
-DROP_AND_CREATE_SQL = """
-DROP TABLE IF EXISTS "referrer_rewards";
-DROP TABLE IF EXISTS "referrals";
-DROP TABLE IF EXISTS "promocodes";
-DROP TABLE IF EXISTS "transactions";
-DROP TABLE IF EXISTS "servers";
-DROP TABLE IF EXISTS "users";
-
-CREATE TABLE "users" (
+BASE_SCHEMA = """
+CREATE TABLE IF NOT EXISTS "users" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "uuid" CHAR(36) NOT NULL UNIQUE,
     "email" VARCHAR(255) UNIQUE,
@@ -31,7 +22,7 @@ CREATE TABLE "users" (
     "updated_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE "servers" (
+CREATE TABLE IF NOT EXISTS "servers" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "name" VARCHAR(100) NOT NULL,
     "host" VARCHAR(255) NOT NULL,
@@ -50,7 +41,7 @@ CREATE TABLE "servers" (
     "updated_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE "transactions" (
+CREATE TABLE IF NOT EXISTS "transactions" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "uuid" CHAR(36) NOT NULL UNIQUE,
     "user_id" INT NOT NULL,
@@ -69,7 +60,7 @@ CREATE TABLE "transactions" (
 );
 CREATE INDEX IF NOT EXISTS "idx_transaction_user_id" ON "transactions" ("user_id");
 
-CREATE TABLE "promocodes" (
+CREATE TABLE IF NOT EXISTS "promocodes" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "code" VARCHAR(50) NOT NULL UNIQUE,
     "duration_days" INT NOT NULL DEFAULT 30,
@@ -80,7 +71,7 @@ CREATE TABLE "promocodes" (
     "created_at" TIMESTAMP NOT NULL
 );
 
-CREATE TABLE "referrals" (
+CREATE TABLE IF NOT EXISTS "referrals" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "referrer_id" INT NOT NULL,
     "referred_id" INT NOT NULL UNIQUE,
@@ -90,7 +81,7 @@ CREATE TABLE "referrals" (
 CREATE INDEX IF NOT EXISTS "idx_referrals_referrer" ON "referrals" ("referrer_id");
 CREATE INDEX IF NOT EXISTS "idx_referrals_referred" ON "referrals" ("referred_id");
 
-CREATE TABLE "referrer_rewards" (
+CREATE TABLE IF NOT EXISTS "referrer_rewards" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "user_id" INT NOT NULL,
     "referral_id" INT NOT NULL,
@@ -103,6 +94,32 @@ CREATE TABLE "referrer_rewards" (
 CREATE INDEX IF NOT EXISTS "idx_referrer_rewards_user" ON "referrer_rewards" ("user_id");
 """
 
+# Add new migrations here as tuples: (name, sql)
+MIGRATIONS: list[tuple[str, str]] = []
+
+
+async def run_migrations():
+    conn = Tortoise.get_connection("default")
+
+    # Ensure migrations tracking table exists
+    await conn.execute_script(f"""
+        CREATE TABLE IF NOT EXISTS "{SCHEMA_MIGRATIONS_TABLE}" (
+            "name" TEXT NOT NULL PRIMARY KEY,
+            "applied_at" TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+    """)
+
+    # Get applied migrations
+    rows = await conn.execute_query(f'SELECT "name" FROM "{SCHEMA_MIGRATIONS_TABLE}"')
+    applied = {row["name"] for row in rows[1]}
+
+    for name, sql in MIGRATIONS:
+        if name in applied:
+            continue
+        await conn.execute_script(sql)
+        await conn.execute_query(f'INSERT INTO "{SCHEMA_MIGRATIONS_TABLE}" ("name") VALUES (?)', [name])
+        print(f"[db] Applied migration: {name}")
+
 
 async def init_db():
     await Tortoise.init(
@@ -110,7 +127,19 @@ async def init_db():
         modules={"models": ["app.core.models"]},
     )
     conn = Tortoise.get_connection("default")
-    await conn.execute_script(DROP_AND_CREATE_SQL)
+
+    # Check if any of our tables already exist (fresh DB or existing)
+    existing = await conn.execute_query(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('users','servers','transactions')"
+    )
+    if not existing[1]:
+        print("[db] Fresh database — creating schema...")
+        await conn.execute_script(BASE_SCHEMA)
+    else:
+        print("[db] Database exists — checking schema version...")
+
+    await run_migrations()
+    print("[db] Schema up to date.")
 
 
 async def close_db():
