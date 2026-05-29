@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { apiCached, apiJson } from '../api'
+import { apiJson } from '../api'
 import { CardSkeleton } from '../ui'
 import { Link } from 'react-router-dom'
 import { useConfig } from '../ConfigContext'
@@ -24,10 +24,13 @@ export default function Dashboard() {
   const [servers, setServers] = useState([])
   const [history, setHistory] = useState([])
 
+  const [balance, setBalance] = useState(0)
+
   async function load() {
     try { setSub(await apiJson('/user/subscription')) } catch {} finally { setSubLoading(false) }
     apiJson('/user/servers').then(setServers).catch(() => {})
     apiJson('/payment/history').then(setHistory).catch(() => {})
+    apiJson('/user/balance').then(d => setBalance(d.balance)).catch(() => {})
   }
   useEffect(() => { load() }, [])
 
@@ -81,15 +84,15 @@ export default function Dashboard() {
         </div>
       )}
 
-      <div className="bg-surface border border-border rounded-2xl p-5 flex items-center justify-between">
+      <Link to="/pricing" className="bg-surface border border-border rounded-2xl p-5 flex items-center justify-between hover:border-primary transition-colors">
         <div>
           <p className="text-sm text-muted">{d('balance')}</p>
-          <p className="text-2xl font-bold mt-0.5">0 ₽</p>
+          <p className="text-2xl font-bold mt-0.5">{balance} ₽</p>
         </div>
-        <Link to="/pricing" className="bg-bg border border-border text-sm font-medium px-5 py-2.5 rounded-xl hover:border-primary transition-colors">
-          Пополнить
-        </Link>
-      </div>
+        <span className="bg-bg border border-border text-sm font-medium px-5 py-2.5 rounded-xl hover:border-primary transition-colors">
+          Пополнить →
+        </span>
+      </Link>
 
       <div className="bg-surface border border-border rounded-2xl p-5 space-y-3">
         <div className="flex items-center justify-between">

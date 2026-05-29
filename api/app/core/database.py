@@ -311,6 +311,18 @@ async def run_migrations():
         )
         print("[db] Applied migration: 009_server_api_token")
 
+    # Migration 010 — user balance
+    if "010_user_balance" not in applied:
+        col_info = await conn.execute_query("PRAGMA table_info('users')")
+        col_names = {r["name"] for r in col_info[1]}
+        if "balance" not in col_names:
+            await conn.execute_query('ALTER TABLE "users" ADD COLUMN "balance" VARCHAR(40) NOT NULL DEFAULT \'0\'')
+        await conn.execute_query(
+            f'INSERT OR IGNORE INTO "{SCHEMA_MIGRATIONS_TABLE}" ("name") VALUES (?)',
+            ["010_user_balance"],
+        )
+        print("[db] Applied migration: 010_user_balance")
+
     print("[db] Schema up to date.")
 
 

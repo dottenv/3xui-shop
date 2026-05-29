@@ -25,6 +25,11 @@ async def update_profile(body: ProfileUpdate, user: User = Depends(get_current_u
     return user
 
 
+@router.get("/balance")
+async def get_balance(user: User = Depends(get_current_user)):
+    return {"balance": float(user.balance)}
+
+
 @router.get("/subscription")
 async def get_subscription(user: User = Depends(get_current_user)):
     sub = await Subscription.filter(user_id=user.id, is_active=True).order_by("-expires_at").first()
@@ -91,38 +96,42 @@ async def get_subscriptions(user: User = Depends(get_current_user)):
 async def get_subscription_config(user: User = Depends(get_current_user)):
     sub = await Subscription.filter(user_id=user.id, is_active=True).order_by("-expires_at").first()
     if not sub:
-        return {"detail": "No active subscription"}
+        raise HTTPException(status_code=404, detail="Нет активной подписки")
 
     server = await Server.get_or_none(id=sub.server_id)
     if not server:
-        return {"detail": "Server not found"}
+        raise HTTPException(status_code=404, detail="Сервер не найден")
 
     host = server.host
     port = server.sub_port or server.port or 443
     uuid = sub.client_uuid
-    name = quote(f"{server.name} — CWIM")
+    label = f"Cwim VPN — {server.flag or ''} {server.name}".strip()
+    name = quote(label)
 
     links = []
     base_params = f"pbk={server.config_public_key}&fp=chrome&sni={server.config_sni}"
 
     # VLESS + Reality (TCP)
-    params1 = f"type=tcp&security=reality&flow={server.config_flow}&{base_params}&sid={server.config_short_id}"
-    links.append({"protocol": "vless-reality-tcp", "link": f"vless://{uuid}@{host}:{port}?{params1}#{name}"})
+    p1 = f"type=tcp&security=reality&flow={server.config_flow}&{base_params}&sid={server.config_short_id}"
+    links.append({"protocol": "VLESS+Reality TCP", "link": f"vless://{uuid}@{host}:{port}?{p1}#{name}"})
 
     # VLESS + Reality (XHTTP)
-    params2 = f"type=xhttp&security=reality&flow={server.config_flow}&{base_params}&sid={server.config_short_id}"
-    links.append({"protocol": "vless-reality-xhttp", "link": f"vless://{uuid}@{host}:{port}?{params2}#{name}"})
+    p2 = f"type=xhttp&security=reality&flow={server.config_flow}&{base_params}&sid={server.config_short_id}"
+    links.append({"protocol": "VLESS+Reality XHTTP", "link": f"vless://{uuid}@{host}:{port}?{p2}#{name}"})
 
-    # Direct subscription link (Sing-box / Outline)
-    sub_link = f"vless://{uuid}@{host}:{port}?{params1}&sub=true#{name}"
-    links.append({"protocol": "subscription", "link": sub_link})
+    # XUI subscription link (auto-config for clients)
+    sub_link = f"vless://{uuid}@{host}:{port}?{p1}&sub=true#sub_{name}"
+    links.append({"protocol": "Subscription", "link": sub_link})
 
     return {
         "server_name": server.name,
+        "server_flag": server.flag or "",
         "host": host,
         "port": port,
         "protocol": server.protocol,
         "client_uuid": uuid,
+        "expires_at": sub.expires_at.isoformat() if sub.expires_at else None,
+        "is_online": server.is_online,
         "links": links,
     }
 

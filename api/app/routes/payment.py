@@ -18,12 +18,21 @@ class CreatePaymentRequest(BaseModel):
     promo_code: Optional[str] = None
 
 
+class TopUpRequest(BaseModel):
+    amount: float = Field(..., gt=0)
+    payment_gateway: str = Field(default="mock")
+
+
 class PaymentResponse(BaseModel):
     payment_id: str
     amount: float
     currency: str
     status: str
     redirect_url: Optional[str] = None
+    sub_id: Optional[int] = None
+    sub_uuid: Optional[str] = None
+    server_name: Optional[str] = None
+    config_link: Optional[str] = None
 
 
 PLANS = {
@@ -33,23 +42,33 @@ PLANS = {
 }
 
 
-async def issue_subscription(txn: Transaction, user: User, plan_id: str) -> Optional[Subscription]:
+async def issue_subscription(user: User, plan_id: str) -> Subscription:
     plan = PLANS.get(plan_id)
     if not plan:
         plan = {"devices": 1, "duration_days": 30}
 
     active = await Server.filter(is_active=True).all()
     if not active:
-        return None
+        raise HTTPException(status_code=503, detail="Нет доступных серверов")
     server = random.choice(active)
+
+    # Check multiple subs rule: only dedicated servers allow multiple subscriptions
+    if not server.is_dedicated:
+        existing_active = await Subscription.filter(user_id=user.id, is_active=True).first()
+        if existing_active:
+            raise HTTPException(
+                status_code=400,
+                detail="У вас уже есть активная подписка. Отзовите её в поддержке перед покупкой новой, или выберите выделенный сервер.",
+            )
 
     now = datetime.now(timezone.utc)
     duration = plan["duration_days"]
     expires_at = now + timedelta(days=duration)
-    email_tag = f"u{user.id}_{server.id}"
+    safe_name = server.name.replace(" ", "_").replace("/", "_")[:20]
+    email_tag = f"cwim_{safe_name}_{user.id}"
     traffic_limit_gb = 50
 
-    # 1. Create XUI client
+    # Create XUI client
     xui = XuiService(
         base_url=build_base_url(server.host, server.port, server.xui_url),
         username=server.xui_username,
@@ -57,7 +76,7 @@ async def issue_subscription(txn: Transaction, user: User, plan_id: str) -> Opti
         api_token=server.xui_api_token,
     )
     try:
-        await xui.add_client(
+        resp = await xui.add_client(
             inbound_id=server.inbound_id,
             email=email_tag,
             client_uuid="",
@@ -66,15 +85,16 @@ async def issue_subscription(txn: Transaction, user: User, plan_id: str) -> Opti
         )
         real_client = await xui.get_client_by_email(email_tag)
         xui_uuid = (real_client or {}).get("uuid", "")
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"XUI error creating client: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Ошибка 3X-UI: {str(e)}")
     finally:
         await xui.close()
 
     if not xui_uuid:
-        raise HTTPException(status_code=500, detail="XUI created client but returned no UUID")
+        raise HTTPException(status_code=500, detail="3X-UI не вернул UUID клиента")
 
-    # 2. Create subscription record in DB
     sub = await Subscription.create(
         user_id=user.id,
         plan_id=plan_id,
@@ -86,6 +106,11 @@ async def issue_subscription(txn: Transaction, user: User, plan_id: str) -> Opti
         starts_at=now,
         expires_at=expires_at,
     )
+
+    # Update server client count
+    server.current_clients += 1
+    await server.save()
+
     return sub
 
 
@@ -94,50 +119,81 @@ async def get_plans():
     return PLANS
 
 
-@router.post("/create", response_model=PaymentResponse)
+@router.post("/top-up")
+async def top_up_balance(body: TopUpRequest, user: User = Depends(get_current_user)):
+    txn = await Transaction.create(
+        uuid=uuid.uuid4(),
+        user_id=user.id,
+        payment_gateway=body.payment_gateway,
+        amount=body.amount,
+        currency="RUB",
+        status="completed",
+        paid_at=datetime.now(timezone.utc),
+    )
+    user.balance = float(user.balance) + body.amount
+    await user.save()
+    return {"success": True, "balance": float(user.balance), "transaction_id": txn.id}
+
+
+@router.post("/create")
 async def create_payment(body: CreatePaymentRequest,
-                         background_tasks: BackgroundTasks,
                          user: User = Depends(get_current_user)):
     plan = PLANS.get(body.plan_id)
     if not plan:
-        raise HTTPException(status_code=400, detail="Invalid plan")
+        raise HTTPException(status_code=400, detail="Неверный тариф")
+
+    price = plan["price"]
+    balance = float(user.balance)
+    if balance < price:
+        raise HTTPException(status_code=402, detail=f"Недостаточно средств. Нужно: {price} ₽, баланс: {balance} ₽")
 
     payment_id = uuid.uuid4()
     now = datetime.now(timezone.utc)
+
+    # Reserve funds
+    user.balance = round(balance - price, 2)
+    await user.save()
 
     txn = await Transaction.create(
         uuid=payment_id,
         user_id=user.id,
         payment_gateway=body.payment_gateway,
-        amount=plan["price"],
+        amount=price,
         currency="RUB",
         devices=plan["devices"],
         duration_days=plan["duration_days"],
         status="processing",
     )
 
-    if body.payment_gateway == "mock":
-        try:
-            await issue_subscription(txn, user, body.plan_id)
-            txn.status = "completed"
-            txn.paid_at = datetime.now(timezone.utc)
-            await txn.save()
-        except HTTPException:
-            txn.status = "failed"
-            await txn.save()
-            raise
-        except Exception as e:
-            txn.status = "failed"
-            await txn.save()
-            raise HTTPException(status_code=500, detail=f"Failed to issue subscription: {str(e)}")
+    try:
+        sub = await issue_subscription(user, body.plan_id)
+        txn.status = "completed"
+        txn.paid_at = datetime.now(timezone.utc)
+        await txn.save()
 
-    return PaymentResponse(
-        payment_id=str(payment_id),
-        amount=float(plan["price"]),
-        currency="RUB",
-        status=txn.status,
-        redirect_url=None,
-    )
+        return PaymentResponse(
+            payment_id=str(payment_id),
+            amount=price,
+            currency="RUB",
+            status="completed",
+            sub_id=sub.id,
+            sub_uuid=sub.client_uuid,
+            server_name=sub.server.name if sub.server_id else None,
+            config_link=f"/config",
+        )
+    except HTTPException:
+        # Refund on failure
+        user.balance = float(user.balance) + price
+        await user.save()
+        txn.status = "failed"
+        await txn.save()
+        raise
+    except Exception as e:
+        user.balance = float(user.balance) + price
+        await user.save()
+        txn.status = "failed"
+        await txn.save()
+        raise HTTPException(status_code=500, detail=f"Ошибка: {str(e)}")
 
 
 @router.get("/status/{payment_id}")

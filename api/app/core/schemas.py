@@ -31,6 +31,7 @@ class UserResponse(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     is_active: bool
+    balance: float = 0
     last_ip: Optional[str] = None
     last_login: Optional[datetime] = None
     created_at: datetime

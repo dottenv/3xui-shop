@@ -80,7 +80,7 @@ export default function Config() {
       <BackButton />
       <div>
         <h1 className="text-xl font-bold">{t('app.pages.config.title')}</h1>
-        <p className="text-muted text-sm mt-1">{config.server_name} · {config.protocol.toUpperCase()} · {config.host}:{config.port}</p>
+        <p className="text-muted text-sm mt-1">{config.server_flag} {config.server_name} · {config.host}:{config.port} · до {new Date(config.expires_at).toLocaleDateString('ru-RU')}</p>
       </div>
 
       {config.links.map((item, i) => (

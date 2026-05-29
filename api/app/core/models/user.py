@@ -26,6 +26,8 @@ class User(Model):
     last_login = fields.DatetimeField(null=True)
     last_user_agent = fields.TextField(null=True)
 
+    balance = fields.DecimalField(max_digits=12, decimal_places=2, default=0)
+
     referral_code = fields.CharField(max_length=20, unique=True, null=True)
     referred_by = fields.IntField(null=True)
 
