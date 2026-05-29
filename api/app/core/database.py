@@ -105,7 +105,19 @@ CREATE TABLE IF NOT EXISTS "admins" (
 """
 
 # Add new migrations here as tuples: (name, sql)
-MIGRATIONS: list[tuple[str, str]] = []
+MIGRATIONS: list[tuple[str, str]] = [
+    ("001_admins", """
+        CREATE TABLE IF NOT EXISTS "admins" (
+            "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+            "email" VARCHAR(255) NOT NULL UNIQUE,
+            "password_hash" VARCHAR(255) NOT NULL,
+            "role" VARCHAR(20) NOT NULL DEFAULT 'admin',
+            "is_active" INT NOT NULL DEFAULT 1,
+            "created_by" INT,
+            "created_at" TIMESTAMP NOT NULL
+        );
+    """),
+]
 
 
 async def run_migrations():
