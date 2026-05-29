@@ -6,7 +6,7 @@ import uuid
 
 from app.core.models import User, Transaction, Subscription, Server
 from app.core.deps import get_current_user
-from app.core.services.xui import XuiService, generate_uuid
+from app.core.services.xui import XuiService, generate_uuid, build_base_url
 
 router = APIRouter()
 
@@ -51,7 +51,7 @@ async def issue_subscription(transaction: Transaction, user: User, plan_id: str)
 
     try:
         xui = XuiService(
-            host=server.xui_url or server.host,
+            base_url=build_base_url(server.host, server.port, server.xui_url),
             username=server.xui_username,
             password=server.xui_password,
             api_token=server.xui_api_token,

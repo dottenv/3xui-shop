@@ -10,7 +10,7 @@ from app.core.security import (
     decode_token,
 )
 from app.core.models import Admin, User, Server, Transaction, Subscription, IpWhitelist
-from app.core.services.xui import XuiService
+from app.core.services.xui import XuiService, build_base_url
 
 router = APIRouter()
 admin_bearer = HTTPBearer(auto_error=False)
@@ -370,7 +370,7 @@ async def test_server_connection(server_id: int, admin: Admin = Depends(get_curr
     if not server:
         raise HTTPException(status_code=404, detail="Server not found")
     xui = XuiService(
-        host=server.xui_url or server.host,
+        base_url=build_base_url(server.host, server.port, server.xui_url),
         username=server.xui_username,
         password=server.xui_password,
         api_token=server.xui_api_token,
@@ -382,7 +382,6 @@ async def test_server_connection(server_id: int, admin: Admin = Depends(get_curr
         return {"success": False, "message": str(e)}
     finally:
         await xui.close()
-
 
 
 @router.get("/subscriptions")
@@ -413,7 +412,7 @@ async def revoke_subscription(sub_id: int, admin: Admin = Depends(get_current_ad
         if server:
             try:
                 xui = XuiService(
-                    host=server.xui_url or server.host,
+                    base_url=build_base_url(server.host, server.port, server.xui_url),
                     username=server.xui_username,
                     password=server.xui_password,
                     api_token=server.xui_api_token,
@@ -433,7 +432,7 @@ async def clean_depleted(server_id: int, admin: Admin = Depends(get_current_admi
     if not server:
         raise HTTPException(status_code=404, detail="Server not found")
     xui = XuiService(
-        host=server.xui_url or server.host,
+        base_url=build_base_url(server.host, server.port, server.xui_url),
         username=server.xui_username,
         password=server.xui_password,
         api_token=server.xui_api_token,
@@ -496,7 +495,7 @@ async def fetch_server_inbounds(server_id: int, admin: Admin = Depends(get_curre
     if not server:
         raise HTTPException(status_code=404, detail="Server not found")
     xui = XuiService(
-        host=server.xui_url or server.host,
+        base_url=build_base_url(server.host, server.port, server.xui_url),
         username=server.xui_username,
         password=server.xui_password,
         api_token=server.xui_api_token,
@@ -516,7 +515,7 @@ async def restart_server_xray(server_id: int, admin: Admin = Depends(get_current
     if not server:
         raise HTTPException(status_code=404, detail="Server not found")
     xui = XuiService(
-        host=server.xui_url or server.host,
+        base_url=build_base_url(server.host, server.port, server.xui_url),
         username=server.xui_username,
         password=server.xui_password,
         api_token=server.xui_api_token,

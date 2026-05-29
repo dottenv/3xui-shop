@@ -5,15 +5,19 @@ import httpx
 
 class XuiClient:
     """HTTP-клиент для 3X-UI Panel API v3.x.
-    Поддерживает два режима аутентификации:
-    - Bearer token (новый, из Settings → Security → API Token)
-    - Login + password (сессионная cookie, старый)
+    Аутентификация:
+      - Bearer token (Settings → Security → API Token) — приоритет
+      - Login + password (сессионная cookie) — fallback если токен не указан
+
+    base_url = полный URL панели, например:
+      https://host:port
+      https://host:port/custom-path
     """
 
-    def __init__(self, host: str, port: int = 443,
+    def __init__(self, base_url: str,
                  username: str = "", password: str = "",
                  api_token: str = "", verify_ssl: bool = False):
-        self.base_url = f"https://{host}:{port}"
+        self.base_url = base_url.rstrip("/")
         self.username = username
         self.password = password
         self.api_token = api_token
@@ -27,24 +31,21 @@ class XuiClient:
         headers = {}
         if self.api_token:
             headers["Authorization"] = f"Bearer {self.api_token}"
-            self._client = httpx.AsyncClient(
-                base_url=self.base_url,
-                headers=headers,
-                verify=self.verify_ssl,
-                timeout=30,
-            )
-            return self._client
 
         self._client = httpx.AsyncClient(
             base_url=self.base_url,
+            headers=headers,
             verify=self.verify_ssl,
             timeout=30,
         )
-        resp = await self._client.post("/login", json={
-            "username": self.username,
-            "password": self.password,
-        })
-        resp.raise_for_status()
+
+        if not self.api_token and self.username and self.password:
+            resp = await self._client.post("/login", json={
+                "username": self.username,
+                "password": self.password,
+            })
+            resp.raise_for_status()
+
         return self._client
 
     async def close(self):
@@ -78,17 +79,15 @@ class XuiClient:
         data = await self._api_get("/panel/api/inbounds/options")
         return data.get("obj", [])
 
-    async def add_inbound(self, payload: dict) -> dict:
-        return await self._api_post("/panel/api/inbounds/add", payload)
+    async def get_fallbacks(self, inbound_id: int) -> list:
+        data = await self._api_get(f"/panel/api/inbounds/{inbound_id}/fallbacks")
+        return data.get("obj", [])
 
-    async def update_inbound(self, inbound_id: int, payload: dict) -> dict:
-        return await self._api_post(f"/panel/api/inbounds/update/{inbound_id}", payload)
-
-    async def delete_inbound(self, inbound_id: int) -> dict:
-        return await self._api_post(f"/panel/api/inbounds/del/{inbound_id}")
-
-    async def set_inbound_enable(self, inbound_id: int, enable: bool) -> dict:
-        return await self._api_post(f"/panel/api/inbounds/setEnable/{inbound_id}", {"enable": enable})
+    async def update_fallbacks(self, inbound_id: int, fallbacks: list) -> dict:
+        return await self._api_post(
+            f"/panel/api/inbounds/{inbound_id}/fallbacks",
+            {"fallbacks": fallbacks},
+        )
 
     async def reset_inbound_traffic(self, inbound_id: int) -> dict:
         return await self._api_post(f"/panel/api/inbounds/{inbound_id}/resetTraffic")
@@ -96,78 +95,71 @@ class XuiClient:
     async def delete_inbound_all_clients(self, inbound_id: int) -> dict:
         return await self._api_post(f"/panel/api/inbounds/{inbound_id}/delAllClients")
 
-    async def get_fallbacks(self, inbound_id: int) -> list:
-        data = await self._api_get(f"/panel/api/inbounds/{inbound_id}/fallbacks")
-        return data.get("obj", [])
+    # ─── Clients (first-class, OpenAPI v3.x) ────────────────
 
-    async def update_fallbacks(self, inbound_id: int, fallbacks: list) -> dict:
-        return await self._api_post(f"/panel/api/inbounds/{inbound_id}/fallbacks", {"fallbacks": fallbacks})
-
-    # ─── Clients (first-class, new OpenAPI) ─────────────────
-
-    async def add_client(self, inbound_id: int, email: str, client_uuid: str,
-                         traffic_limit_gb: int = 0, expire_days: int = 30) -> bool:
+    async def add_client(self, inbound_ids: list[int],
+                         email: str,
+                         traffic_limit_gb: int = 0,
+                         expire_days: int = 30,
+                         tg_id: int = 0,
+                         limit_ip: int = 0) -> bool:
         now = int(uuid_lib.uuid4().time)
         expiry = now + expire_days * 86400 if expire_days > 0 else 0
         payload = {
-            "id": client_uuid,
-            "inboundId": inbound_id,
-            "email": email,
-            "enable": True,
-            "expiryTime": expiry * 1000,
-            "totalGB": traffic_limit_gb * 1024 * 1024 * 1024,
-            "limitIp": 0,
+            "client": {
+                "email": email,
+                "totalGB": traffic_limit_gb * 1024 * 1024 * 1024,
+                "expiryTime": expiry * 1000,
+                "tgId": tg_id,
+                "limitIp": limit_ip,
+                "enable": True,
+            },
+            "inboundIds": inbound_ids,
         }
         await self._api_post("/panel/api/clients/add", payload)
         return True
 
-    async def update_client(self, client_uuid: str, email: str, enable: bool = True,
-                            traffic_limit_gb: int = 0, expire_days: int = 30) -> bool:
+    async def update_client(self, email: str,
+                            traffic_limit_gb: int = 0,
+                            expire_days: int = 30,
+                            tg_id: int = 0,
+                            enable: bool = True) -> bool:
         now = int(uuid_lib.uuid4().time)
         expiry = now + expire_days * 86400 if expire_days > 0 else 0
         payload = {
-            "id": client_uuid,
             "email": email,
-            "enable": enable,
-            "expiryTime": expiry * 1000,
             "totalGB": traffic_limit_gb * 1024 * 1024 * 1024,
-            "limitIp": 0,
+            "expiryTime": expiry * 1000,
+            "tgId": tg_id,
+            "enable": enable,
         }
-        await self._api_post("/panel/api/clients/update", payload)
+        await self._api_post(f"/panel/api/clients/update/{email}", payload)
         return True
 
-    async def delete_client(self, inbound_id: int, client_uuid: str) -> bool:
-        await self._api_post("/panel/api/clients/del", {
-            "inboundId": inbound_id,
-            "clientId": client_uuid,
-        })
+    async def delete_client(self, email: str, keep_traffic: bool = False) -> bool:
+        params = "?keepTraffic=1" if keep_traffic else ""
+        await self._api_post(f"/panel/api/clients/del/{email}{params}")
         return True
 
-    async def get_client_traffic(self, client_uuid: str) -> Optional[dict]:
-        inbounds = await self.get_inbounds()
-        for inbound in inbounds:
-            for c in inbound.get("clientStats", []):
-                if c.get("id") == client_uuid:
-                    return c
-        return None
+    async def get_client_traffic(self, email: str) -> Optional[dict]:
+        data = await self._api_get(f"/panel/api/clients/traffic/{email}")
+        return data.get("obj")
 
-    async def get_online_clients(self) -> list:
-        data = await self._api_get("/panel/api/clients/online")
+    async def get_client_links(self, email: str) -> list:
+        data = await self._api_get(f"/panel/api/clients/links/{email}")
         return data.get("obj", [])
 
-    async def clean_depleted(self, inbound_id: int) -> bool:
-        stats = await self.get_inbounds()
-        for inbound in stats:
-            if inbound.get("id") == inbound_id:
-                emails = [c["email"] for c in inbound.get("clientStats", [])
-                          if c.get("total", 0) > 0 and c.get("up", 0) + c.get("down", 0) >= c.get("total", 0)]
-                if emails:
-                    await self._api_post("/panel/api/clients/del", {
-                        "inboundId": inbound_id,
-                        "emails": emails,
-                    })
-                return True
-        return False
+    async def get_clients(self) -> list:
+        data = await self._api_get("/panel/api/clients/list")
+        return data.get("obj", [])
+
+    async def get_online_clients(self) -> list:
+        data = await self._api_post("/panel/api/clients/onlines")
+        return data.get("obj", [])
+
+    async def clean_depleted(self) -> bool:
+        await self._api_post("/panel/api/clients/delDepleted")
+        return True
 
     # ─── Server ─────────────────────────────────────────────
 
@@ -204,40 +196,49 @@ class XuiClient:
 
 
 class XuiService:
-    """Обёртка для обратной совместимости.
-    Использует XuiClient внутри, принимает те же аргументы что и раньше,
-    но дополнительно поддерживает api_token.
-    """
+    """Обёртка для обратной совместимости."""
 
-    def __init__(self, host: str, username: str = "", password: str = "",
-                 port: int = 443, api_token: str = ""):
+    def __init__(self, base_url: str, username: str = "", password: str = "",
+                 api_token: str = ""):
         self._client = XuiClient(
-            host=host, port=port,
+            base_url=base_url,
             username=username, password=password,
             api_token=api_token,
         )
-
-    async def _ensure_api(self):
-        return self._client
 
     async def close(self):
         await self._client.close()
 
     async def add_client(self, inbound_id: int, email: str, client_uuid: str,
                          traffic_limit_gb: int = 0, expire_days: int = 30) -> bool:
-        return await self._client.add_client(inbound_id, email, client_uuid,
-                                              traffic_limit_gb, expire_days)
+        return await self._client.add_client(
+            inbound_ids=[inbound_id],
+            email=email,
+            traffic_limit_gb=traffic_limit_gb,
+            expire_days=expire_days,
+        )
 
     async def update_client(self, client_uuid: str, email: str, enable: bool = True,
                             traffic_limit_gb: int = 0, expire_days: int = 30) -> bool:
-        return await self._client.update_client(client_uuid, email, enable,
-                                                 traffic_limit_gb, expire_days)
+        return await self._client.update_client(
+            email=email,
+            traffic_limit_gb=traffic_limit_gb,
+            expire_days=expire_days,
+            enable=enable,
+        )
 
     async def delete_client(self, inbound_id: int, client_uuid: str) -> bool:
-        return await self._client.delete_client(inbound_id, client_uuid)
+        from app.core.models import Subscription
+        sub = await Subscription.filter(client_uuid=client_uuid).first()
+        email = f"u{sub.user_id}_{sub.server_id}" if sub else client_uuid
+        return await self._client.delete_client(email=email)
 
     async def get_client_traffic(self, client_uuid: str) -> Optional[dict]:
-        return await self._client.get_client_traffic(client_uuid)
+        from app.core.models import Subscription
+        sub = await Subscription.filter(client_uuid=client_uuid).first()
+        if not sub:
+            return None
+        return await self._client.get_client_traffic(email=f"u{sub.user_id}_{sub.server_id}")
 
     async def get_inbounds(self) -> list:
         return await self._client.get_inbounds()
@@ -248,13 +249,14 @@ class XuiService:
     async def get_online_clients(self) -> list:
         return await self._client.get_online_clients()
 
+    async def get_server_status(self) -> dict:
+        return await self._client.get_server_status()
+
     async def clean_depleted(self, inbound_id: int) -> bool:
-        return await self._client.clean_depleted(inbound_id)
+        return await self._client.clean_depleted()
 
     async def test_connection(self) -> bool:
         return await self._client.test_connection()
-
-    # ─── Новые методы из OpenAPI v3.x ─────────────────────
 
     async def get_inbounds_options(self) -> list:
         return await self._client.get_inbounds_options()
@@ -268,6 +270,26 @@ class XuiService:
     async def get_db_backup(self) -> bytes:
         return await self._client.get_db_backup()
 
+    async def get_clients(self) -> list:
+        return await self._client.get_clients()
+
+    async def get_client_links(self, email: str) -> list:
+        return await self._client.get_client_links(email)
+
 
 def generate_uuid() -> str:
     return str(uuid_lib.uuid4())
+
+
+def build_base_url(host: str, port: int = 443, xui_url: str = "") -> str:
+    """Собирает base_url для XuiClient из полей сервера.
+    Приоритет: xui_url > host:port
+    """
+    if xui_url:
+        url = xui_url.strip()
+        if not url.startswith("http"):
+            url = f"https://{url}"
+        return url.rstrip("/")
+    if not host.startswith("http"):
+        return f"https://{host}:{port}"
+    return host.rstrip("/")
