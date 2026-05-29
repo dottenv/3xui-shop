@@ -6,7 +6,7 @@ import uuid
 
 from app.core.models import User, Transaction, Subscription, Server
 from app.core.deps import get_current_user
-from app.core.services.xui import XuiService, generate_uuid, build_base_url
+from app.core.services.xui import XuiService, build_base_url
 
 router = APIRouter()
 
@@ -32,50 +32,47 @@ PLANS = {
 }
 
 
-async def issue_subscription(transaction: Transaction, user: User, plan_id: str):
+async def issue_subscription(txn: Transaction, user: User, plan_id: str) -> Optional[Subscription]:
     plan = PLANS.get(plan_id)
     if not plan:
         plan = {"devices": 1, "duration_days": 30}
 
     server = await Server.filter(is_active=True).order_by("?").first()
     if not server:
-        raise HTTPException(status_code=503, detail="No available servers")
+        return None
 
-    client_uuid = generate_uuid()
     now = datetime.now(timezone.utc)
     duration = plan["duration_days"]
     expires_at = now + timedelta(days=duration)
-
     email_tag = f"u{user.id}_{server.id}"
     traffic_limit_gb = 50
 
+    xui = XuiService(
+        base_url=build_base_url(server.host, server.port, server.xui_url),
+        username=server.xui_username,
+        password=server.xui_password,
+        api_token=server.xui_api_token,
+    )
     try:
-        xui = XuiService(
-            base_url=build_base_url(server.host, server.port, server.xui_url),
-            username=server.xui_username,
-            password=server.xui_password,
-            api_token=server.xui_api_token,
+        await xui.add_client(
+            inbound_id=server.inbound_id,
+            email=email_tag,
+            client_uuid="",
+            traffic_limit_gb=traffic_limit_gb,
+            expire_days=duration,
         )
-        try:
-            await xui.add_client(
-                inbound_id=server.inbound_id,
-                email=email_tag,
-                client_uuid=client_uuid,
-                traffic_limit_gb=traffic_limit_gb,
-                expire_days=duration,
-            )
-        except Exception:
-            pass
-        finally:
-            await xui.close()
-    except Exception:
-        pass
+        real_client = await xui.get_client_by_email(email_tag)
+        xui_uuid = (real_client or {}).get("uuid", "")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"XUI error: {str(e)}")
+    finally:
+        await xui.close()
 
     sub = await Subscription.create(
         user_id=user.id,
         plan_id=plan_id,
         server_id=server.id,
-        client_uuid=client_uuid,
+        client_uuid=xui_uuid,
         devices=plan["devices"],
         duration_days=duration,
         traffic_limit=traffic_limit_gb * 1024 * 1024 * 1024,
@@ -98,8 +95,10 @@ async def create_payment(body: CreatePaymentRequest,
     if not plan:
         raise HTTPException(status_code=400, detail="Invalid plan")
 
-    payment_id = str(uuid.uuid4())
+    payment_id = uuid.uuid4()
+    now = datetime.now(timezone.utc)
 
+    status = "completed" if body.payment_gateway == "mock" else "pending"
     txn = await Transaction.create(
         uuid=payment_id,
         user_id=user.id,
@@ -108,15 +107,11 @@ async def create_payment(body: CreatePaymentRequest,
         currency="RUB",
         devices=plan["devices"],
         duration_days=plan["duration_days"],
-        status="pending",
+        status=status,
+        paid_at=now if status == "completed" else None,
     )
 
-    redirect_url = None
     if body.payment_gateway == "mock":
-        txn.status = "completed"
-        txn.paid_at = datetime.now(timezone.utc)
-        await txn.save()
-
         try:
             await issue_subscription(txn, user, body.plan_id)
         except HTTPException:
@@ -125,11 +120,11 @@ async def create_payment(body: CreatePaymentRequest,
             raise HTTPException(status_code=500, detail=f"Failed to issue subscription: {str(e)}")
 
     return PaymentResponse(
-        payment_id=payment_id,
+        payment_id=str(payment_id),
         amount=float(plan["price"]),
         currency="RUB",
         status=txn.status,
-        redirect_url=redirect_url,
+        redirect_url=None,
     )
 
 

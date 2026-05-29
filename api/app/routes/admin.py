@@ -477,11 +477,15 @@ async def get_transactions(admin: Admin = Depends(get_current_admin)):
     return [
         {
             "id": t.id,
-            "uuid": t.uuid,
+            "uuid": str(t.uuid),
             "user_id": t.user_id,
-            "amount": t.amount,
+            "amount": float(t.amount),
             "currency": t.currency,
             "status": t.status,
+            "payment_gateway": t.payment_gateway,
+            "plan_id": None,
+            "devices": t.devices,
+            "duration_days": t.duration_days,
             "created_at": t.created_at.isoformat() if t.created_at else None,
             "paid_at": t.paid_at.isoformat() if t.paid_at else None,
         }

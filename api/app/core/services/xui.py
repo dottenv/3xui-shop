@@ -153,6 +153,13 @@ class XuiClient:
         data = await self._api_get("/panel/api/clients/list")
         return data.get("obj", [])
 
+    async def get_client_by_email(self, email: str) -> Optional[dict]:
+        clients = await self.get_clients()
+        for c in clients:
+            if c.get("email") == email:
+                return c
+        return None
+
     async def get_online_clients(self) -> list:
         data = await self._api_post("/panel/api/clients/onlines")
         return data.get("obj", [])
@@ -272,6 +279,9 @@ class XuiService:
 
     async def get_clients(self) -> list:
         return await self._client.get_clients()
+
+    async def get_client_by_email(self, email: str) -> Optional[dict]:
+        return await self._client.get_client_by_email(email)
 
     async def get_client_links(self, email: str) -> list:
         return await self._client.get_client_links(email)
