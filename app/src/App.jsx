@@ -22,11 +22,11 @@ import MaintenancePage from './pages/MaintenancePage'
 const P = (Page) => <ProtectedRoute><Layout><Page /></Layout></ProtectedRoute>
 
 export default function App() {
-  const { maintenance } = useMaintenance()
+  const { showMaintenance } = useMaintenance()
 
-  if (maintenance === null) return null
+  if (showMaintenance === null) return null
 
-  if (maintenance) return <MaintenancePage />
+  if (showMaintenance) return <MaintenancePage />
 
   return (
     <BrowserRouter>

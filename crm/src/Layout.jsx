@@ -9,6 +9,7 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   SettingOutlined,
+  LockOutlined,
 } from '@ant-design/icons'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from './AuthContext'
@@ -20,6 +21,7 @@ const menuItems = [
   { key: '/', icon: <DashboardOutlined />, label: 'Дашборд' },
   { key: '/users', icon: <TeamOutlined />, label: 'Пользователи' },
   { key: '/orders', icon: <ShoppingCartOutlined />, label: 'Заказы' },
+  { key: '/whitelist', icon: <LockOutlined />, label: 'IP Whitelist' },
   { key: '/settings', icon: <SettingOutlined />, label: 'Настройки' },
 ]
 

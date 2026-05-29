@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard'
 import Users from './pages/Users'
 import Orders from './pages/Orders'
 import Settings from './pages/Settings'
+import IpWhitelist from './pages/IpWhitelist'
 
 function Guard({ children }) {
   const { admin, loading, hasAdmins } = useAuth()
@@ -42,6 +43,7 @@ export default function App() {
               <Route path="users" element={<Users />} />
               <Route path="orders" element={<Orders />} />
               <Route path="settings" element={<Settings />} />
+              <Route path="whitelist" element={<IpWhitelist />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
           </Routes>

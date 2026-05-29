@@ -3,17 +3,17 @@ import { createContext, useContext, useState, useEffect } from 'react'
 const MaintenanceContext = createContext(null)
 
 export function MaintenanceProvider({ children }) {
-  const [maintenance, setMaintenance] = useState(null)
+  const [showMaintenance, setShowMaintenance] = useState(null)
 
   useEffect(() => {
     fetch('/api/public/maintenance')
       .then(r => r.json())
-      .then(d => setMaintenance(d.app))
-      .catch(() => setMaintenance(false))
+      .then(d => setShowMaintenance(d.app && !d.can_bypass))
+      .catch(() => setShowMaintenance(false))
   }, [])
 
   return (
-    <MaintenanceContext.Provider value={{ maintenance }}>
+    <MaintenanceContext.Provider value={{ showMaintenance }}>
       {children}
     </MaintenanceContext.Provider>
   )

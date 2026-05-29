@@ -127,6 +127,17 @@ MIGRATIONS: list[tuple[str, str]] = [
         INSERT OR IGNORE INTO "settings" ("key", "value") VALUES ('maintenance_app', '0');
         INSERT OR IGNORE INTO "settings" ("key", "value") VALUES ('lang', 'ru');
     """),
+    ("003_ip_whitelist", """
+        CREATE TABLE IF NOT EXISTS "ip_whitelist" (
+            "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+            "ip_address" VARCHAR(45) NOT NULL,
+            "comment" VARCHAR(255),
+            "is_active" INT NOT NULL DEFAULT 1,
+            "created_by" INT,
+            "created_at" TIMESTAMP NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS "idx_ip_whitelist_ip" ON "ip_whitelist" ("ip_address");
+    """),
 ]
 
 
