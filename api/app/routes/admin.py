@@ -377,8 +377,12 @@ async def test_server_connection(server_id: int, admin: Admin = Depends(get_curr
     )
     try:
         ok = await xui.test_connection()
+        server.is_online = ok
+        await server.save()
         return {"success": ok, "message": "Connection successful" if ok else "Connection failed"}
     except Exception as e:
+        server.is_online = False
+        await server.save()
         return {"success": False, "message": str(e)}
     finally:
         await xui.close()
