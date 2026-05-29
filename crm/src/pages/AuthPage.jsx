@@ -34,10 +34,10 @@ export default function AuthPage() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'linear-gradient(135deg, #0a0f1e 0%, #111827 50%, #0a0f1e 100%)',
+      background: '#f0f2f5',
       padding: 16,
     }}>
-      <Card style={{ width: 400, maxWidth: '100%' }} bordered={false}>
+      <Card style={{ width: 400, maxWidth: '100%', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }} bordered={false}>
         <Space direction="vertical" size="large" style={{ width: '100%', textAlign: 'center' }}>
           <div>
             <CrownOutlined style={{ fontSize: 40, color: '#1677ff' }} />
@@ -79,13 +79,11 @@ export default function AuthPage() {
             </Form.Item>
           </Form>
 
-          <div>
-            {isRegister ? (
-              <Text type="secondary" style={{ fontSize: 12 }}>
-                Вы создаёте root-администратора. После регистрации вы сможете добавлять других администраторов.
-              </Text>
-            ) : null}
-          </div>
+          {isRegister && (
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              Вы создаёте root-администратора. После регистрации вы сможете добавлять других администраторов.
+            </Text>
+          )}
         </Space>
       </Card>
     </div>
