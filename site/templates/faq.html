@@ -1,12 +1,15 @@
 {% extends "base.html" %}
-{% block title %}FAQ — CWIM VPN{% endblock %}
+{% block title %}FAQ — {{ config.brand.name }} VPN{% endblock %}
 {% block content %}
+
+{% set faq = config.sections.faq_full %}
+{% set cta = config.cta.faq %}
 
 <section class="page-hero">
     <div class="container">
-        <div class="section-label"><i class="fas fa-question-circle"></i> FAQ</div>
-        <h1 class="page-title">Часто задаваемые вопросы</h1>
-        <p class="page-subtitle">Ответы на самые популярные вопросы о нашем сервисе</p>
+        <div class="section-label"><i class="fas fa-question-circle"></i> {{ faq.label }}</div>
+        <h1 class="page-title">{{ faq.title }}</h1>
+        <p class="page-subtitle">{{ faq.subtitle }}</p>
     </div>
 </section>
 
@@ -18,62 +21,27 @@
         </div>
 
         <div class="faq-categories">
-            <button class="faq-cat active" data-cat="all">Все</button>
-            <button class="faq-cat" data-cat="general">Общие</button>
-            <button class="faq-cat" data-cat="setup">Настройка</button>
-            <button class="faq-cat" data-cat="payment">Оплата</button>
+            {% for cat in faq.categories %}
+            <button class="faq-cat{% if loop.first %} active{% endif %}" data-cat="{{ cat.id }}">{{ cat.label }}</button>
+            {% endfor %}
         </div>
 
         <div class="faq-list" id="faqList">
-            <div class="faq-item" data-cat="general">
-                <button class="faq-question">Что такое VPN? <i class="fas fa-chevron-down"></i></button>
-                <div class="faq-answer"><p>VPN (Virtual Private Network) — это технология, которая создаёт зашифрованное соединение между вашим устройством и удалённым сервером. Весь ваш интернет-трафик проходит через этот защищённый туннель, что гарантирует приватность и позволяет обходить региональные блокировки.</p></div>
+            {% for item in faq.items %}
+            <div class="faq-item" data-cat="{{ item.cat }}">
+                <button class="faq-question">{{ item.q }} <i class="fas fa-chevron-down"></i></button>
+                <div class="faq-answer"><p>{{ item.a }}</p></div>
             </div>
-            <div class="faq-item" data-cat="general">
-                <button class="faq-question">Как CWIM защищает мои данные? <i class="fas fa-chevron-down"></i></button>
-                <div class="faq-answer"><p>Мы используем шифрование AES-256 для всех соединений. Наши серверы работают по строгой zero-logs политике — мы не храним историю подключений, IP-адреса или метаданные. Дополнительно реализована защита от утечек DNS и WebRTC.</p></div>
-            </div>
-            <div class="faq-item" data-cat="general">
-                <button class="faq-question">Какие протоколы вы поддерживаете? <i class="fas fa-chevron-down"></i></button>
-                <div class="faq-answer"><p>Мы поддерживаем VLESS + Reality, Trojan, и WebSocket + TLS. Каждый протокол имеет свои преимущества: VLESS максимально незаметен для DPI, Trojan имитирует HTTPS сайт, а WS + TLS идеален для обхода через CDN.</p></div>
-            </div>
-            <div class="faq-item" data-cat="setup">
-                <button class="faq-question">Как начать пользоваться? <i class="fas fa-chevron-down"></i></button>
-                <div class="faq-answer"><p>Всё очень просто: зарегистрируйтесь на app.cwim.ru, выберите тариф, оплатите удобным способом и скачайте конфигурацию для вашего устройства. Подробные инструкции есть в личном кабинете.</p></div>
-            </div>
-            <div class="faq-item" data-cat="setup">
-                <button class="faq-question">На каких устройствах работает? <i class="fas fa-chevron-down"></i></button>
-                <div class="faq-answer"><p>CWIM поддерживает все популярные платформы: Windows, macOS, Linux, iOS, Android. Также возможно подключение на роутерах с OpenWrt, Keenetic и другими прошивками.</p></div>
-            </div>
-            <div class="faq-item" data-cat="setup">
-                <button class="faq-question">Как установить приложение на телефон? <i class="fas fa-chevron-down"></i></button>
-                <div class="faq-answer"><p>Наше PWA-приложение работает без установки из магазина приложений. Просто откройте app.cwim.ru в браузере и добавьте на рабочий стол через меню «Поделиться» → «На экран домой».</p></div>
-            </div>
-            <div class="faq-item" data-cat="payment">
-                <button class="faq-question">Какие способы оплаты доступны? <i class="fas fa-chevron-down"></i></button>
-                <div class="faq-answer"><p>Мы принимаем банковские карты (Visa, MasterCard, МИР), криптовалюту (Bitcoin, USDT, ETH) и электронные кошельки. Все платежи обрабатываются через защищённые платёжные шлюзы.</p></div>
-            </div>
-            <div class="faq-item" data-cat="payment">
-                <button class="faq-question">Есть ли возврат средств? <i class="fas fa-chevron-down"></i></button>
-                <div class="faq-answer"><p>Да, мы предоставляем гарантию возврата средств в течение 7 дней с момента оплаты, если сервис вам не подошёл. Для этого напишите в поддержку.</p></div>
-            </div>
-            <div class="faq-item" data-cat="payment">
-                <button class="faq-question">Могу ли я продлить подписку досрочно? <i class="fas fa-chevron-down"></i></button>
-                <div class="faq-answer"><p>Да, дни суммируются. Если у вас осталось 15 дней подписки, и вы продлеваете на месяц, у вас будет 45 дней. Также доступно авто-продление.</p></div>
-            </div>
-            <div class="faq-item" data-cat="general">
-                <button class="faq-question">Что такое пробный период? <i class="fas fa-chevron-down"></i></button>
-                <div class="faq-answer"><p>Пробный период — это возможность бесплатно протестировать наш VPN. Вы получаете ограниченный доступ ко всем функциям на несколько дней. Никаких платёжных данных не требуется.</p></div>
-            </div>
+            {% endfor %}
         </div>
     </div>
 </section>
 
 <section class="cta reveal">
     <div class="container">
-        <h2>Не нашли ответ?</h2>
-        <p>Напишите нам — мы ответим в течение 15 минут</p>
-        <a href="mailto:support@cwim.ru" class="btn btn-primary btn-lg"><i class="fas fa-envelope"></i> Написать в поддержку</a>
+        <h2>{{ cta.title }}</h2>
+        <p>{{ cta.text }}</p>
+        <a href="{{ cta.btn_href }}" class="btn btn-primary btn-lg"><i class="fas fa-envelope"></i> {{ cta.btn_text }}</a>
     </div>
 </section>
 
@@ -90,7 +58,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }, { threshold: 0.1 });
     revealElements.forEach(el => observer.observe(el));
 
-    // FAQ accordion
     document.querySelectorAll('.faq-question').forEach(btn => {
         btn.addEventListener('click', function() {
             const item = this.parentElement;
@@ -100,7 +67,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // FAQ search
     document.getElementById('faqSearch')?.addEventListener('input', function() {
         const query = this.value.toLowerCase();
         document.querySelectorAll('.faq-item').forEach(item => {
@@ -109,7 +75,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // FAQ categories
     document.querySelectorAll('.faq-cat').forEach(btn => {
         btn.addEventListener('click', function() {
             document.querySelectorAll('.faq-cat').forEach(b => b.classList.remove('active'));

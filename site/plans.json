@@ -1,0 +1,79 @@
+{
+    "payment_methods": [
+        { "icon": "fa-credit-card", "label": "Банковские карты" },
+        { "icon": "fa-bitcoin", "label": "Криптовалюта" },
+        { "icon": "fa-wallet", "label": "Электронные кошельки" }
+    ],
+    "plans": [
+        {
+            "id": "start",
+            "name": "Старт",
+            "price": 250,
+            "currency": "₽",
+            "period": "/мес",
+            "price_year": "2 400",
+            "currency_year": "₽",
+            "desc": "Для одного устройства",
+            "featured": false,
+            "badge": null,
+            "btn_text": "Выбрать",
+            "btn_class": "btn-outline",
+            "features": [
+                { "label": "1 устройство", "enabled": true },
+                { "label": "Все серверы", "enabled": true },
+                { "label": "Все протоколы", "enabled": true },
+                { "label": "Поддержка 24/7", "enabled": true },
+                { "label": "Пробный период", "enabled": true },
+                { "label": "Приоритетная поддержка", "enabled": false },
+                { "label": "Скидка за год", "enabled": false }
+            ]
+        },
+        {
+            "id": "optimal",
+            "name": "Оптимальный",
+            "price": 500,
+            "currency": "₽",
+            "period": "/мес",
+            "price_year": "4 800",
+            "currency_year": "₽",
+            "desc": "Для всей семьи",
+            "featured": true,
+            "badge": "Рекомендуем",
+            "btn_text": "Выбрать",
+            "btn_class": "btn-primary",
+            "features": [
+                { "label": "3 устройства", "enabled": true },
+                { "label": "Все серверы", "enabled": true },
+                { "label": "Все протоколы", "enabled": true },
+                { "label": "Приоритетная поддержка", "enabled": true },
+                { "label": "Пробный период", "enabled": true },
+                { "label": "Скидка до -30% за год", "enabled": true },
+                { "label": "Доступ к новым серверам", "enabled": true }
+            ]
+        },
+        {
+            "id": "maximum",
+            "name": "Максимум",
+            "price": 750,
+            "currency": "₽",
+            "period": "/мес",
+            "price_year": "7 200",
+            "currency_year": "₽",
+            "desc": "Для всей техники",
+            "featured": false,
+            "badge": null,
+            "btn_text": "Выбрать",
+            "btn_class": "btn-outline",
+            "features": [
+                { "label": "5 устройств", "enabled": true },
+                { "label": "Все серверы", "enabled": true },
+                { "label": "Все протоколы", "enabled": true },
+                { "label": "VIP поддержка 24/7", "enabled": true },
+                { "label": "Пробный период", "enabled": true },
+                { "label": "Скидка до -40% за год", "enabled": true },
+                { "label": "Ранний доступ к функциям", "enabled": true },
+                { "label": "Выделенный сервер", "enabled": true }
+            ]
+        }
+    ]
+}

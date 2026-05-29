@@ -1,6 +1,9 @@
 {% extends "base.html" %}
-{% block title %}Возможности — CWIM VPN{% endblock %}
+{% block title %}Возможности — {{ config.brand.name }} VPN{% endblock %}
 {% block content %}
+
+{% set blocks = config.sections.features_detail %}
+{% set cta = config.cta.default %}
 
 <section class="page-hero">
     <div class="container">
@@ -11,81 +14,28 @@
 
 <section class="features-detail reveal">
     <div class="container">
-        <div class="feature-block reveal delay-1">
-            <div class="feature-block-icon"><i class="fas fa-bolt"></i></div>
+        {% for block in blocks %}
+        <div class="feature-block reveal delay-{{ loop.cycle(1,2,3,4,5) }}">
+            <div class="feature-block-icon"><i class="fas {{ block.icon }}"></i></div>
             <div class="feature-block-content">
-                <h3>Максимальная скорость</h3>
-                <p>Наши серверы расположены в дата-центрах с прямыми каналами связи. Мы используем протоколы с минимальным оверхедом, чтобы обеспечить максимальную пропускную способность.</p>
+                <h3>{{ block.title }}</h3>
+                <p>{{ block.text }}</p>
                 <ul>
-                    <li><i class="fas fa-check"></i> Серверы с аплинком от 1 Гбит/с</li>
-                    <li><i class="fas fa-check"></i> Поддержка TCP BBR для оптимизации</li>
-                    <li><i class="fas fa-check"></i> Минимальная задержка — от 5 мс</li>
+                    {% for item in block.items %}
+                    <li><i class="fas fa-check"></i> {{ item }}</li>
+                    {% endfor %}
                 </ul>
             </div>
         </div>
-
-        <div class="feature-block reveal delay-2">
-            <div class="feature-block-icon"><i class="fas fa-shield"></i></div>
-            <div class="feature-block-content">
-                <h3>Безопасность и приватность</h3>
-                <p>Мы серьёзно относимся к безопасности пользователей. Все соединения шифруются с использованием AES-256 — стандарта шифрования, используемого правительственными организациями.</p>
-                <ul>
-                    <li><i class="fas fa-check"></i> Шифрование AES-256 + ChaCha20</li>
-                    <li><i class="fas fa-check"></i> Strict zero-logs политика</li>
-                    <li><i class="fas fa-check"></i> Защита от утечек DNS и WebRTC</li>
-                    <li><i class="fas fa-check"></i> Kill switch — отключение интернета при падении VPN</li>
-                </ul>
-            </div>
-        </div>
-
-        <div class="feature-block reveal delay-3">
-            <div class="feature-block-icon"><i class="fas fa-globe"></i></div>
-            <div class="feature-block-content">
-                <h3>Обход блокировок</h3>
-                <p>Благодаря современным протоколам, наш VPN успешно обходит глубокий анализ пакетов (DPI) и не отличается от обычного HTTPS-трафика.</p>
-                <ul>
-                    <li><i class="fas fa-check"></i> VLESS + Reality — маскировка под TLS</li>
-                    <li><i class="fas fa-check"></i> Trojan — имитация HTTPS сайта</li>
-                    <li><i class="fas fa-check"></i> WebSocket + TLS — обход через CDN</li>
-                </ul>
-            </div>
-        </div>
-
-        <div class="feature-block reveal delay-4">
-            <div class="feature-block-icon"><i class="fas fa-mobile-screen"></i></div>
-            <div class="feature-block-content">
-                <h3>Мультиплатформенность</h3>
-                <p>Используйте VPN на всех ваших устройствах. Подписка привязывается к аккаунту, а не к устройству.</p>
-                <ul>
-                    <li><i class="fas fa-check"></i> Windows — встроенный клиент</li>
-                    <li><i class="fas fa-check"></i> macOS — нативное приложение</li>
-                    <li><i class="fas fa-check"></i> iOS/Android — PWA приложение</li>
-                    <li><i class="fas fa-check"></i> Linux — CLI инструменты</li>
-                    <li><i class="fas fa-check"></i> Роутеры — OpenWrt, Keenetic и др.</li>
-                </ul>
-            </div>
-        </div>
-
-        <div class="feature-block reveal delay-5">
-            <div class="feature-block-icon"><i class="fas fa-headset"></i></div>
-            <div class="feature-block-content">
-                <h3>Поддержка 24/7</h3>
-                <p>Наша команда поддержки всегда готова помочь. Отвечаем в среднем за 15 минут в рабочее время.</p>
-                <ul>
-                    <li><i class="fas fa-check"></i> Чат в приложении</li>
-                    <li><i class="fas fa-check"></i> Email поддержка</li>
-                    <li><i class="fas fa-check"></i> База знаний и инструкции</li>
-                </ul>
-            </div>
-        </div>
+        {% endfor %}
     </div>
 </section>
 
 <section class="cta reveal">
     <div class="container">
-        <h2>Готовы попробовать?</h2>
-        <p>Подключите VPN за 2 минуты</p>
-        <a href="https://app.cwim.ru" class="btn btn-primary btn-lg"><i class="fas fa-rocket"></i> Начать бесплатно</a>
+        <h2>{{ cta.title }}</h2>
+        <p>{{ cta.text }}</p>
+        <a href="{{ cta.btn_href }}" class="btn btn-primary btn-lg"><i class="fas fa-rocket"></i> {{ cta.btn_text }}</a>
     </div>
 </section>
 

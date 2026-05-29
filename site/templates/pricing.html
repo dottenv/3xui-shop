@@ -1,6 +1,9 @@
 {% extends "base.html" %}
-{% block title %}Тарифы — CWIM VPN{% endblock %}
+{% block title %}Тарифы — {{ config.brand.name }} VPN{% endblock %}
 {% block content %}
+
+{% set pm = plans.payment_methods %}
+{% set cta = config.cta.pricing %}
 
 <section class="page-hero">
     <div class="container">
@@ -13,55 +16,20 @@
 <section class="pricing reveal" id="pricing">
     <div class="container">
         <div class="pricing-grid">
-            <div class="pricing-card reveal delay-1">
-                <h3>Старт</h3>
-                <div class="price"><span class="amount">250</span><span class="currency">₽</span><span class="period">/мес</span></div>
-                <p class="plan-desc">Для одного устройства</p>
+            {% for plan in plans.plans %}
+            <div class="pricing-card{% if plan.featured %} featured{% endif %} reveal delay-{{ loop.cycle(1,2,3) }}">
+                {% if plan.badge %}<div class="badge">{{ plan.badge }}</div>{% endif %}
+                <h3>{{ plan.name }}</h3>
+                <div class="price"><span class="amount">{{ plan.price }}</span><span class="currency">{{ plan.currency }}</span><span class="period">{{ plan.period }}</span></div>
+                <p class="plan-desc">{{ plan.desc }}</p>
                 <ul class="features-list">
-                    <li><i class="fas fa-check"></i> 1 устройство</li>
-                    <li><i class="fas fa-check"></i> Все серверы</li>
-                    <li><i class="fas fa-check"></i> Все протоколы</li>
-                    <li><i class="fas fa-check"></i> Поддержка 24/7</li>
-                    <li><i class="fas fa-check"></i> Пробный период</li>
-                    <li class="disabled"><i class="fas fa-times"></i> Приоритетная поддержка</li>
-                    <li class="disabled"><i class="fas fa-times"></i> Скидка за год</li>
+                    {% for f in plan.features %}
+                    <li{% if not f.enabled %} class="disabled"{% endif %}><i class="fas {% if f.enabled %}fa-check{% else %}fa-times{% endif %}"></i> {{ f.label }}</li>
+                    {% endfor %}
                 </ul>
-                <a href="https://app.cwim.ru" class="btn btn-outline btn-block">Выбрать</a>
+                <a href="https://app.cwim.ru" class="btn {{ plan.btn_class }} btn-block">{{ plan.btn_text }}</a>
             </div>
-
-            <div class="pricing-card featured reveal delay-2">
-                <div class="badge">Рекомендуем</div>
-                <h3>Оптимальный</h3>
-                <div class="price"><span class="amount">500</span><span class="currency">₽</span><span class="period">/мес</span></div>
-                <p class="plan-desc">Для всей семьи</p>
-                <ul class="features-list">
-                    <li><i class="fas fa-check"></i> 3 устройства</li>
-                    <li><i class="fas fa-check"></i> Все серверы</li>
-                    <li><i class="fas fa-check"></i> Все протоколы</li>
-                    <li><i class="fas fa-check"></i> Приоритетная поддержка</li>
-                    <li><i class="fas fa-check"></i> Пробный период</li>
-                    <li><i class="fas fa-check"></i> Скидка до -30% за год</li>
-                    <li><i class="fas fa-check"></i> Доступ к новым серверам</li>
-                </ul>
-                <a href="https://app.cwim.ru" class="btn btn-primary btn-block">Выбрать</a>
-            </div>
-
-            <div class="pricing-card reveal delay-3">
-                <h3>Максимум</h3>
-                <div class="price"><span class="amount">750</span><span class="currency">₽</span><span class="period">/мес</span></div>
-                <p class="plan-desc">Для всей техники</p>
-                <ul class="features-list">
-                    <li><i class="fas fa-check"></i> 5 устройств</li>
-                    <li><i class="fas fa-check"></i> Все серверы</li>
-                    <li><i class="fas fa-check"></i> Все протоколы</li>
-                    <li><i class="fas fa-check"></i> VIP поддержка 24/7</li>
-                    <li><i class="fas fa-check"></i> Пробный период</li>
-                    <li><i class="fas fa-check"></i> Скидка до -40% за год</li>
-                    <li><i class="fas fa-check"></i> Ранний доступ к функциям</li>
-                    <li><i class="fas fa-check"></i> Выделенный сервер</li>
-                </ul>
-                <a href="https://app.cwim.ru" class="btn btn-outline btn-block">Выбрать</a>
-            </div>
+            {% endfor %}
         </div>
 
         <div class="pricing-table reveal">
@@ -71,19 +39,42 @@
                     <thead>
                         <tr>
                             <th></th>
-                            <th>Старт</th>
-                            <th class="highlight">Оптимальный</th>
-                            <th>Максимум</th>
+                            {% for plan in plans.plans %}
+                            <th{% if plan.featured %} class="highlight"{% endif %}>{{ plan.name }}</th>
+                            {% endfor %}
                         </tr>
                     </thead>
                     <tbody>
-                        <tr><td>Устройства</td><td>1</td><td class="highlight">3</td><td>5</td></tr>
-                        <tr><td>Серверы</td><td>Все</td><td class="highlight">Все</td><td>Все</td></tr>
-                        <tr><td>Протоколы</td><td>Все</td><td class="highlight">Все</td><td>Все</td></tr>
-                        <tr><td>Приоритет поддержки</td><td><i class="fas fa-times" style="color:var(--text-muted)"></i></td><td class="highlight"><i class="fas fa-check" style="color:var(--success)"></i></td><td><i class="fas fa-check" style="color:var(--success)"></i></td></tr>
-                        <tr><td>Скидка за год</td><td>—</td><td class="highlight">до 30%</td><td>до 40%</td></tr>
-                        <tr><td>Цена за месяц</td><td>250 ₽</td><td class="highlight">500 ₽</td><td>750 ₽</td></tr>
-                        <tr><td>Цена за год</td><td>2 400 ₽</td><td class="highlight">4 800 ₽</td><td>7 200 ₽</td></tr>
+                        <tr>
+                            <td>Устройства</td>
+                            {% for plan in plans.plans %}
+                            <td{% if plan.featured %} class="highlight"{% endif %}>{{ plan.features[0].label }}</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td>Серверы</td>
+                            {% for plan in plans.plans %}
+                            <td{% if plan.featured %} class="highlight"{% endif %}>Все</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td>Протоколы</td>
+                            {% for plan in plans.plans %}
+                            <td{% if plan.featured %} class="highlight"{% endif %}>Все</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td>Цена за месяц</td>
+                            {% for plan in plans.plans %}
+                            <td{% if plan.featured %} class="highlight"{% endif %}>{{ plan.price }} {{ plan.currency }}</td>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <td>Цена за год</td>
+                            {% for plan in plans.plans %}
+                            <td{% if plan.featured %} class="highlight"{% endif %}>{{ plan.price_year }} {{ plan.currency_year }}</td>
+                            {% endfor %}
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -92,9 +83,9 @@
         <div class="payment-info reveal">
             <h3><i class="fas fa-credit-card"></i> Способы оплаты</h3>
             <div class="payment-methods">
-                <div class="payment-method"><i class="fas fa-credit-card"></i> Банковские карты</div>
-                <div class="payment-method"><i class="fas fa-bitcoin"></i> Криптовалюта</div>
-                <div class="payment-method"><i class="fas fa-wallet"></i> Электронные кошельки</div>
+                {% for m in pm %}
+                <div class="payment-method"><i class="fas {{ m.icon }}"></i> {{ m.label }}</div>
+                {% endfor %}
             </div>
         </div>
     </div>
@@ -102,9 +93,9 @@
 
 <section class="cta reveal">
     <div class="container">
-        <h2>Остались вопросы?</h2>
-        <p>Свяжитесь с нами — мы с радостью поможем с выбором тарифа</p>
-        <a href="/faq" class="btn btn-outline btn-lg">Перейти в FAQ</a>
+        <h2>{{ cta.title }}</h2>
+        <p>{{ cta.text }}</p>
+        <a href="{{ cta.btn_href }}" class="btn btn-outline btn-lg">{{ cta.btn_text }}</a>
     </div>
 </section>
 

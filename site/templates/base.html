@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}CWIM - Быстрый и безопасный VPN{% endblock %}</title>
+    <title>{% block title %}{{ config.brand.name }} — {{ config.brand.tagline }}{% endblock %}</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M50 10C35 10 25 25 25 40v10h-5v40h60V50h-5V40C75 25 65 10 50 10zm-5 45a5 5 0 0110 0v10a5 5 0 01-10 0V55zm15-15H40v-8c0-8 4-12 10-12s10 4 10 12v8z' fill='%232563eb'/></svg>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -20,11 +20,11 @@
 
     <header class="header">
         <div class="container">
-            <a href="/" class="logo"><i class="fas fa-shield-halved"></i>CWIM</a>
+            <a href="/" class="logo">{{ config.brand.name }}</a>
             <nav class="nav">
-                <a href="/features">Возможности</a>
-                <a href="/pricing">Тарифы</a>
-                <a href="/faq">FAQ</a>
+                {% for item in config.nav %}
+                <a href="{{ item.href }}">{{ item.label }}</a>
+                {% endfor %}
                 <a href="https://app.cwim.ru" class="btn btn-primary btn-sm">Войти</a>
             </nav>
             <button class="burger" aria-label="Меню">
@@ -41,35 +41,27 @@
         <div class="container">
             <div class="footer-content">
                 <div class="footer-brand">
-                    <span class="logo"><i class="fas fa-shield-halved"></i>CWIM</span>
-                    <p class="footer-desc">Современный VPN-сервис с фокусом на скорость, безопасность и конфиденциальность ваших данных.</p>
+                    <span class="logo"><i class="fas fa-shield-halved"></i>{{ config.brand.name }}</span>
+                    <p class="footer-desc">{{ config.footer.desc }}</p>
                     <div class="footer-social">
-                        <a href="#" aria-label="Telegram"><i class="fab fa-telegram"></i></a>
-                        <a href="#" aria-label="GitHub"><i class="fab fa-github"></i></a>
-                        <a href="mailto:support@cwim.ru" aria-label="Email"><i class="fas fa-envelope"></i></a>
+                        {% for s in config.footer.social %}
+                        <a href="{{ s.href }}" aria-label="{{ s.label }}"><i class="{{ s.icon }}"></i></a>
+                        {% endfor %}
                     </div>
                 </div>
                 <div class="footer-links-group">
+                    {% for col in config.footer.columns %}
                     <div class="footer-col">
-                        <h4>Продукт</h4>
-                        <a href="/features">Возможности</a>
-                        <a href="/pricing">Тарифы</a>
-                        <a href="https://app.cwim.ru">Личный кабинет</a>
+                        <h4>{{ col.title }}</h4>
+                        {% for link in col.links %}
+                        <a href="{{ link.href }}">{{ link.label }}</a>
+                        {% endfor %}
                     </div>
-                    <div class="footer-col">
-                        <h4>Поддержка</h4>
-                        <a href="/faq">FAQ</a>
-                        <a href="mailto:support@cwim.ru">Связаться с нами</a>
-                    </div>
-                    <div class="footer-col">
-                        <h4>Правовая</h4>
-                        <a href="#">Политика конфиденциальности</a>
-                        <a href="#">Условия использования</a>
-                    </div>
+                    {% endfor %}
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2026 CWIM. Все права защищены.</p>
+                <p>&copy; 2026 {{ config.brand.name }}. Все права защищены.</p>
             </div>
         </div>
     </footer>
