@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime, timezone, timedelta
 import uuid
+import random
 
 from app.core.models import User, Transaction, Subscription, Server
 from app.core.deps import get_current_user
@@ -37,7 +38,10 @@ async def issue_subscription(txn: Transaction, user: User, plan_id: str) -> Opti
     if not plan:
         plan = {"devices": 1, "duration_days": 30}
 
-    server = await Server.filter(is_active=True).order_by("?").first()
+    active = await Server.filter(is_active=True).all()
+    if not active:
+        return None
+    server = random.choice(active)
     if not server:
         return None
 
