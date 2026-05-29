@@ -315,7 +315,7 @@ function NodesTab() {
   async function handleTest(id) {
     setTesting(id)
     try {
-      const r = await apiJson(`/admin/servers/${id}/test`)
+      const r = await apiJson(`/admin/servers/${id}/test`, { method: 'POST' })
       if (r.success) message.success(r.message || 'Подключение успешно')
       else message.error(r.message || 'Ошибка подключения')
     } catch (err) { message.error(err.message) } finally { setTesting(null) }
@@ -324,7 +324,7 @@ function NodesTab() {
   async function handleRestartXray(id) {
     setRestarting(id)
     try {
-      const r = await apiJson(`/admin/servers/${id}/restart-xray`)
+      const r = await apiJson(`/admin/servers/${id}/restart-xray`, { method: 'POST' })
       if (r.success) message.success(r.message || 'Xray перезапущен')
       else message.error(r.message || 'Ошибка')
     } catch (err) { message.error(err.message) } finally { setRestarting(null) }
@@ -341,7 +341,7 @@ function NodesTab() {
   async function handleFetchInbounds(id) {
     setFetchingInbounds(id)
     try {
-      const r = await apiJson(`/admin/servers/${id}/fetch-inbounds`)
+      const r = await apiJson(`/admin/servers/${id}/fetch-inbounds`, { method: 'POST' })
       if (r.success) setInboundsModal({ serverId: id, inbounds: r.inbounds })
       else message.error(r.message || 'Ошибка')
     } catch (err) { message.error(err.message) } finally { setFetchingInbounds(null) }
