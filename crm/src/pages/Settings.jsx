@@ -1,17 +1,24 @@
 import { useEffect, useState } from 'react'
 import {
   Typography, Switch, Select, message, Spin, Tabs, Table, Button, Modal,
-  Form, Input, InputNumber, Tag, Space, Popconfirm,
+  Form, Input, InputNumber, Tag, Space, Popconfirm, Tooltip,
 } from 'antd'
 import {
   SettingOutlined, GlobalOutlined, MobileOutlined, LockOutlined,
   PlusOutlined, DeleteOutlined, ReloadOutlined, ApiOutlined,
-  CloudServerOutlined, KeyOutlined, ToolOutlined,
+  CloudServerOutlined, KeyOutlined, ToolOutlined, ThunderboltOutlined,
   CloudOutlined, FlagOutlined, NodeIndexOutlined,
 } from '@ant-design/icons'
 import api, { apiJson } from '../api'
 
 const { Title, Text } = Typography
+
+function fmtBytes(bytes) {
+  if (!bytes || bytes === 0) return '0 B'
+  const units = ['B', 'KB', 'MB', 'GB', 'TB']
+  const i = Math.floor(Math.log(bytes) / Math.log(1024))
+  return (bytes / Math.pow(1024, i)).toFixed(1) + ' ' + units[i]
+}
 
 export default function Settings() {
   const [settings, setSettings] = useState(null)
@@ -234,7 +241,10 @@ function NodesTab() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const [testing, setTesting] = useState(null)
+  const [restarting, setRestarting] = useState(null)
   const [cleaning, setCleaning] = useState(null)
+  const [fetchingInbounds, setFetchingInbounds] = useState(null)
+  const [inboundsModal, setInboundsModal] = useState(null)
   const [form] = Form.useForm()
 
   async function fetch() {
@@ -246,18 +256,39 @@ function NodesTab() {
   }
   useEffect(() => { fetch() }, [])
 
-  function openCreate() { setEditing(null); form.resetFields(); setModalOpen(true) }
-  function openEdit(r) { setEditing(r); form.setFieldsValue(r); setModalOpen(true) }
+  function openCreate() {
+    setEditing(null)
+    form.resetFields()
+    form.setFieldsValue({ port: 443, sub_port: 2096, inbound_id: 1, max_clients: 200, protocol: 'vless' })
+    setModalOpen(true)
+  }
+
+  function openEdit(r) {
+    setEditing(r)
+    const vals = { ...r }
+    delete vals.id
+    delete vals.xui_has_token
+    delete vals.created_at
+    delete vals.updated_at
+    delete vals.is_online
+    delete vals.current_clients
+    form.setFieldsValue(vals)
+    setModalOpen(true)
+  }
 
   async function handleSave() {
     const values = await form.validateFields()
+    const cleaned = {}
+    for (const [k, v] of Object.entries(values)) {
+      if (v !== undefined && v !== null && v !== '') cleaned[k] = v
+    }
     try {
       if (editing) {
-        await apiJson(`/admin/servers/${editing.id}`, { method: 'PUT', body: JSON.stringify(values) })
-        message.success('Сервер обновлён')
+        await apiJson(`/admin/servers/${editing.id}`, { method: 'PUT', body: JSON.stringify(cleaned) })
+        message.success('Нода обновлена')
       } else {
-        await apiJson('/admin/servers', { method: 'POST', body: JSON.stringify(values) })
-        message.success('Сервер создан')
+        await apiJson('/admin/servers', { method: 'POST', body: JSON.stringify(cleaned) })
+        message.success('Нода создана')
       }
       setModalOpen(false)
       fetch()
@@ -266,9 +297,9 @@ function NodesTab() {
 
   async function handleDelete(id) {
     Modal.confirm({
-      title: 'Удалить сервер?', content: 'Это действие необратимо.', okText: 'Удалить', okType: 'danger', cancelText: 'Отмена',
+      title: 'Удалить ноду?', content: 'Это действие необратимо.', okText: 'Удалить', okType: 'danger', cancelText: 'Отмена',
       onOk: async () => {
-        try { await apiJson(`/admin/servers/${id}`, { method: 'DELETE' }); message.success('Сервер удалён'); fetch() }
+        try { await apiJson(`/admin/servers/${id}`, { method: 'DELETE' }); message.success('Нода удалена'); fetch() }
         catch (err) { message.error(err.message) }
       },
     })
@@ -283,6 +314,15 @@ function NodesTab() {
     } catch (err) { message.error(err.message) } finally { setTesting(null) }
   }
 
+  async function handleRestartXray(id) {
+    setRestarting(id)
+    try {
+      const r = await apiJson(`/admin/servers/${id}/restart-xray`)
+      if (r.success) message.success(r.message || 'Xray перезапущен')
+      else message.error(r.message || 'Ошибка')
+    } catch (err) { message.error(err.message) } finally { setRestarting(null) }
+  }
+
   async function handleClean(id) {
     setCleaning(id)
     try {
@@ -291,23 +331,57 @@ function NodesTab() {
     } catch (err) { message.error(err.message) } finally { setCleaning(null) }
   }
 
+  async function handleFetchInbounds(id) {
+    setFetchingInbounds(id)
+    try {
+      const r = await apiJson(`/admin/servers/${id}/fetch-inbounds`)
+      if (r.success) setInboundsModal({ serverId: id, inbounds: r.inbounds })
+      else message.error(r.message || 'Ошибка')
+    } catch (err) { message.error(err.message) } finally { setFetchingInbounds(null) }
+  }
+
+  const availableLocs = [
+    { label: '🇳🇱 Netherlands', value: 'NL' },
+    { label: '🇩🇪 Germany', value: 'DE' },
+    { label: '🇺🇸 USA', value: 'US' },
+    { label: '🇫🇷 France', value: 'FR' },
+    { label: '🇬🇧 UK', value: 'GB' },
+    { label: '🇨🇦 Canada', value: 'CA' },
+    { label: '🇸🇬 Singapore', value: 'SG' },
+    { label: '🇯🇵 Japan', value: 'JP' },
+    { label: '🇫🇮 Finland', value: 'FI' },
+    { label: '🇺🇦 Ukraine', value: 'UA' },
+  ]
+
   const columns = [
     { title: 'ID', dataIndex: 'id', key: 'id', width: 50 },
-    { title: 'Название', dataIndex: 'name', key: 'name', width: 140, render: (v, r) => <>{r.flag || ''} {v}</> },
-    { title: 'Хост', dataIndex: 'host', key: 'host', width: 140 },
-    { title: 'XUI URL', dataIndex: 'xui_url', key: 'xui_url', width: 140, ellipsis: true },
-    { title: 'Login', dataIndex: 'xui_username', key: 'xui_username', width: 100 },
-    { title: 'Inbound', dataIndex: 'inbound_id', key: 'inbound_id', width: 70 },
-    { title: 'Протокол', dataIndex: 'protocol', key: 'protocol', width: 90 },
+    { title: 'Название', dataIndex: 'name', key: 'name', render: (v, r) => <>{r.flag || ''} {v}</> },
+    { title: 'URL ноды', dataIndex: 'xui_url', key: 'xui_url', ellipsis: true, render: (v, r) => v || `${r.host}:${r.port}` },
+    {
+      title: 'Аутентификация', key: 'auth', width: 100,
+      render: (_, r) => r.xui_has_token
+        ? <Tag color="purple" icon={<KeyOutlined />}>API Token</Tag>
+        : <Tag>Логин/Пароль</Tag>,
+    },
+    { title: 'Inbound', dataIndex: 'inbound_id', key: 'inbound_id', width: 65 },
+    { title: 'Протокол', dataIndex: 'protocol', key: 'protocol', width: 80 },
+    { title: 'Клиенты', key: 'clients', width: 70, render: (_, r) => `${r.current_clients}/${r.max_clients}` },
     {
       title: 'Статус', key: 'status', width: 100,
-      render: (_, r) => <><Tag color={r.is_active ? 'green' : 'red'}>{r.is_active ? 'Активен' : 'Нет'}</Tag></>,
+      render: (_, r) => (
+        <Space>
+          <Tag color={r.is_active ? 'green' : 'red'}>{r.is_active ? 'Активен' : 'Нет'}</Tag>
+          <Tag color={r.is_online ? 'blue' : 'default'}>{r.is_online ? 'Online' : 'Offline'}</Tag>
+        </Space>
+      ),
     },
     {
-      title: 'Действия', key: 'actions', width: 250,
+      title: 'Действия', key: 'actions', width: 350,
       render: (_, r) => (
         <Space size="small" wrap>
-          <Button size="small" icon={<ApiOutlined />} loading={testing === r.id} onClick={() => handleTest(r.id)}>Test</Button>
+          <Tooltip title="Проверить подключение"><Button size="small" icon={<ApiOutlined />} loading={testing === r.id} onClick={() => handleTest(r.id)} /></Tooltip>
+          <Tooltip title="Перезапустить Xray"><Button size="small" icon={<ThunderboltOutlined />} loading={restarting === r.id} onClick={() => handleRestartXray(r.id)} /></Tooltip>
+          <Tooltip title="Список инбаундов"><Button size="small" loading={fetchingInbounds === r.id} onClick={() => handleFetchInbounds(r.id)}>IB</Button></Tooltip>
           <Button size="small" loading={cleaning === r.id} onClick={() => handleClean(r.id)}>Clean</Button>
           <Button size="small" onClick={() => openEdit(r)}>Ред.</Button>
           <Button size="small" danger onClick={() => handleDelete(r.id)}>Уд.</Button>
@@ -319,66 +393,99 @@ function NodesTab() {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, marginTop: 8 }}>
-        <Text>Управление XUI нодами: добавление, тестирование, очистка неактивных клиентов</Text>
+        <Text>Управление 3X-UI нодами. <KeyOutlined /> API Token — приоритетный способ подключения.</Text>
         <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>Добавить ноду</Button>
       </div>
-      <Table dataSource={servers} columns={columns} rowKey="id" loading={loading} size="small" pagination={false} scroll={{ x: 1000 }} />
 
-      <Modal title={editing ? 'Редактировать ноду' : 'Новая нода'} open={modalOpen} onCancel={() => setModalOpen(false)}
-        onOk={handleSave} okText={editing ? 'Сохранить' : 'Создать'} cancelText="Отмена" width={640}>
+      <Table dataSource={servers} columns={columns} rowKey="id" loading={loading} size="small" pagination={false} scroll={{ x: 1200 }} />
+
+      <Modal title={editing ? 'Редактировать ноду' : 'Новая нода 3X-UI'} open={modalOpen}
+        onCancel={() => setModalOpen(false)} onOk={handleSave}
+        okText={editing ? 'Сохранить' : 'Создать'} cancelText="Отмена" width={700}>
         <Form form={form} layout="vertical" style={{ marginTop: 12 }}>
-          <Form.Item name="name" label="Название" rules={[{ required: true }]}>
-            <Input placeholder="Netherlands-01" />
+          <Form.Item name="name" label="Название ноды" rules={[{ required: true }]}>
+            <Input placeholder="NL-01, DE-01, ..." />
           </Form.Item>
-          <Form.Item name="host" label="Хост (IP или домен)" rules={[{ required: true }]}>
-            <Input placeholder="192.168.1.1" />
+
+          <Form.Item name="xui_url" label="URL панели 3X-UI" rules={[{ required: true, message: 'Введите URL панели' }]}
+            help="Полный URL: https://ip:порт/путь (если есть) или просто ip:порт">
+            <Input placeholder="https://192.168.1.1:17166/abc123 или 192.168.1.1:17166" />
           </Form.Item>
-          <Space style={{ width: '100%' }} size={16}>
-            <Form.Item name="port" label="Порт панели" initialValue={443}>
-              <InputNumber min={1} max={65535} />
+
+          <div style={{ background: '#fafafa', padding: 12, borderRadius: 8, marginBottom: 16 }}>
+            <Text strong style={{ fontSize: 13, display: 'block', marginBottom: 8, color: '#8b5cf6' }}>
+              <KeyOutlined /> Аутентификация — API Token (приоритет)
+            </Text>
+            <Form.Item name="xui_api_token" label="API Token"
+              help={editing ? 'Оставьте пустым, чтобы не менять' : 'Из Settings → Security → API Token панели 3X-UI'}>
+              <Input.Password placeholder={editing
+                ? (editing.xui_has_token ? '✅ Токен установлен · оставьте пустым' : 'Введите новый API Token')
+                : 'Введите API Token из панели 3X-UI'
+              } />
             </Form.Item>
+
+            <details style={{ cursor: 'pointer', marginTop: 8 }}>
+              <summary style={{ color: '#888', fontSize: 13 }}>Логин/пароль (если нет токена)</summary>
+              <Space style={{ width: '100%', marginTop: 8 }} size={16}>
+                <Form.Item name="xui_username" label="Username" style={{ flex: 1 }}>
+                  <Input placeholder="admin" />
+                </Form.Item>
+                <Form.Item name="xui_password" label="Password" style={{ flex: 1 }}>
+                  <Input.Password placeholder="Оставьте пустым, если не меняется" />
+                </Form.Item>
+              </Space>
+            </details>
+          </div>
+
+          <Space style={{ width: '100%' }} size={16}>
+            <Form.Item name="location" label="Локация" style={{ flex: 1 }}>
+              <Select placeholder="Выберите страну" allowClear options={availableLocs} />
+            </Form.Item>
+            <Form.Item name="country" label="ISO2" style={{ width: 80 }}>
+              <Input placeholder="NL" maxLength={2} />
+            </Form.Item>
+            <Form.Item name="flag" label="Флаг" style={{ width: 80 }}>
+              <Input placeholder="🇳🇱" />
+            </Form.Item>
+          </Space>
+
+          <Space style={{ width: '100%' }} size={16}>
             <Form.Item name="sub_port" label="Sub Port" initialValue={2096}>
               <InputNumber min={1} max={65535} />
             </Form.Item>
             <Form.Item name="inbound_id" label="Inbound ID" initialValue={1}>
               <InputNumber min={1} />
             </Form.Item>
+            <Form.Item name="protocol" label="Протокол" initialValue="vless">
+              <Select>
+                <Select.Option value="vless">VLESS</Select.Option>
+                <Select.Option value="trojan">Trojan</Select.Option>
+                <Select.Option value="shadowsocks">Shadowsocks</Select.Option>
+              </Select>
+            </Form.Item>
+            <Form.Item name="max_clients" label="Макс. клиентов" initialValue={200}>
+              <InputNumber min={1} />
+            </Form.Item>
           </Space>
-          <Space style={{ width: '100%' }} size={16}>
-            <Form.Item name="location" label="Локация">
-              <Input placeholder="Amsterdam" />
-            </Form.Item>
-            <Form.Item name="country" label="Страна (ISO2)">
-              <Input placeholder="NL" maxLength={2} />
-            </Form.Item>
-            <Form.Item name="flag" label="Флаг">
-              <Input placeholder="🇳🇱" />
-            </Form.Item>
-          </Space>
-          <Form.Item name="protocol" label="Протокол" initialValue="vless">
-            <Select>
-              <Select.Option value="vless">VLESS</Select.Option>
-              <Select.Option value="trojan">Trojan</Select.Option>
-              <Select.Option value="shadowsocks">Shadowsocks</Select.Option>
-            </Select>
-          </Form.Item>
-          <div style={{ background: '#fafafa', padding: 12, borderRadius: 8, marginBottom: 16 }}>
-            <Text strong style={{ fontSize: 13, display: 'block', marginBottom: 8, color: '#8b5cf6' }}>
-              <CloudOutlined /> Подключение к XUI панели
-            </Text>
-            <Form.Item name="xui_url" label="XUI URL (если отличается от host)" help="Напр. https://xui.example.com:443">
-              <Input placeholder="Оставьте пустым если host = xui_url" />
-            </Form.Item>
-            <Space style={{ width: '100%' }} size={16}>
-              <Form.Item name="xui_username" label="XUI Username" style={{ flex: 1 }}>
-                <Input placeholder="admin" />
-              </Form.Item>
-              <Form.Item name="xui_password" label="XUI Password" style={{ flex: 1 }}>
-                <Input.Password placeholder="Пароль" />
-              </Form.Item>
-            </Space>
-          </div>
         </Form>
+      </Modal>
+
+      <Modal title="Инбаунды ноды" open={!!inboundsModal} onCancel={() => setInboundsModal(null)}
+        footer={<Button onClick={() => setInboundsModal(null)}>Закрыть</Button>} width={800}>
+        {inboundsModal && (
+          <Table dataSource={inboundsModal.inbounds} rowKey="id" pagination={false}
+            columns={[
+              { title: 'ID', dataIndex: 'id', width: 60 },
+              { title: 'Remark', dataIndex: 'remark' },
+              { title: 'Порт', dataIndex: 'port', width: 80 },
+              { title: 'Протокол', dataIndex: 'protocol', width: 100 },
+              { title: 'Клиентов', key: 'clients', width: 80, render: (_, r) => r.clientStats?.length || 0 },
+              { title: 'Статус', width: 70, render: (_, r) => <Tag color={r.enable ? 'green' : 'red'}>{r.enable ? 'On' : 'Off'}</Tag> },
+              { title: 'Трафик up/down', width: 170, render: (_, r) => `${fmtBytes(r.up)} / ${fmtBytes(r.down)}` },
+            ]}
+            scroll={{ x: 700 }}
+          />
+        )}
       </Modal>
     </div>
   )
