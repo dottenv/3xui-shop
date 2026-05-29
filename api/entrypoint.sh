@@ -1,17 +1,7 @@
 #!/bin/sh
 set -e
 
-echo "[api] Checking Aerich migrations..."
-
-# Если директории migrations нет — инициализируем
-if [ ! -d "/app/migrations" ]; then
-    echo "[api] Initializing Aerich..."
-    aerich init -t app.core.database.TORTOISE_ORM
-    echo "[api] Creating initial migration..."
-    aerich init-db
-fi
-
-echo "[api] Applying pending migrations..."
+echo "[api] Applying database migrations..."
 aerich upgrade
 
 echo "[api] Starting server..."
