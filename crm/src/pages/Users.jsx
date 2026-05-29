@@ -1,11 +1,11 @@
 import { useEffect, useState, useCallback } from 'react'
 import {
-  Table, Card, Tag, Typography, Input, Space, Button, Modal, Form,
-  Dropdown, message, Popconfirm, Switch,
+  Table, Card, Tag, Typography, Input, Modal, Form,
+  Dropdown, message, Switch,
 } from 'antd'
 import {
   SearchOutlined, EditOutlined, StopOutlined, CheckCircleOutlined,
-  CrownOutlined, UserSwitchOutlined, DeleteOutlined, MoreOutlined,
+  CrownOutlined, DeleteOutlined,
 } from '@ant-design/icons'
 import api from '../api'
 
@@ -80,6 +80,25 @@ export default function Users() {
     } catch (err) { message.error(err.response?.data?.detail || 'Ошибка') }
   }
 
+  const [contextUser, setContextUser] = useState(null)
+
+  function handleContextAction({ key }) {
+    const user = contextUser
+    setContextUser(null)
+    if (!user) return
+    if (key === 'edit') openEdit(user)
+    if (key === 'block') toggleBlock(user)
+    if (key === 'admin') toggleAdmin(user)
+    if (key === 'delete') Modal.confirm({
+      title: 'Удалить пользователя',
+      content: `Вы уверены, что хотите удалить ${user.email || `пользователя #${user.id}`}?`,
+      okText: 'Удалить',
+      okType: 'danger',
+      cancelText: 'Отмена',
+      onOk: () => handleDelete(user),
+    })
+  }
+
   const contextMenu = (user) => ({
     items: [
       { key: 'edit', icon: <EditOutlined />, label: 'Редактировать' },
@@ -88,20 +107,10 @@ export default function Users() {
       { type: 'divider' },
       { key: 'delete', icon: <DeleteOutlined />, label: 'Удалить', danger: true },
     ],
-    onClick: ({ key }) => {
-      if (key === 'edit') openEdit(user)
-      if (key === 'block') toggleBlock(user)
-      if (key === 'admin') toggleAdmin(user)
-      if (key === 'delete') Modal.confirm({
-        title: 'Удалить пользователя',
-        content: `Вы уверены, что хотите удалить ${user.email || `пользователя #${user.id}`}?`,
-        okText: 'Удалить',
-        okType: 'danger',
-        cancelText: 'Отмена',
-        onOk: () => handleDelete(user),
-      })
-    },
+    onClick: handleContextAction,
   })
+
+  const cm = contextUser ? contextMenu(contextUser) : { items: [], onClick: () => {} }
 
   const columns = [
     { title: 'ID', dataIndex: 'id', width: 60, sorter: (a, b) => a.id - b.id },
@@ -137,16 +146,6 @@ export default function Users() {
       sorter: (a, b) => new Date(a.created_at) - new Date(b.created_at),
       defaultSortOrder: 'descend',
     },
-    {
-      title: '',
-      key: 'actions',
-      width: 50,
-      render: (_, record) => (
-        <Dropdown menu={contextMenu(record)} trigger={['click']}>
-          <Button type="text" icon={<MoreOutlined />} size="small" />
-        </Dropdown>
-      ),
-    },
   ]
 
   return (
@@ -164,22 +163,27 @@ export default function Users() {
       </div>
 
       <Card style={{ borderRadius: 12 }}>
-        <Table
-          dataSource={filtered}
-          columns={columns}
-          rowKey="id"
-          loading={loading}
-          size="small"
-          pagination={{ pageSize: 20, showTotal: (t) => `Всего: ${t}` }}
-          onRow={(record) => ({
-            onContextMenu: (e) => {
-              e.preventDefault()
-              // simple right-click: toggle block
-              toggleBlock(record)
-            },
-            style: { cursor: 'context-menu' },
-          })}
-        />
+        <Dropdown
+          menu={cm}
+          open={!!contextUser}
+          onOpenChange={(open) => { if (!open) setContextUser(null) }}
+          trigger={['contextMenu']}
+        >
+          <div>
+            <Table
+              dataSource={filtered}
+              columns={columns}
+              rowKey="id"
+              loading={loading}
+              size="small"
+              pagination={{ pageSize: 20, showTotal: (t) => `Всего: ${t}` }}
+              onRow={(record) => ({
+                onContextMenu: () => setContextUser(record),
+                style: { cursor: 'context-menu' },
+              })}
+            />
+          </div>
+        </Dropdown>
       </Card>
 
       <Modal

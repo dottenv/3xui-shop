@@ -6,7 +6,6 @@ import AuthPage from './pages/AuthPage'
 import Dashboard from './pages/Dashboard'
 import Users from './pages/Users'
 import Orders from './pages/Orders'
-import Admins from './pages/Admins'
 
 function Guard({ children }) {
   const { admin, loading, hasAdmins } = useAuth()
@@ -41,7 +40,6 @@ export default function App() {
               <Route index element={<Dashboard />} />
               <Route path="users" element={<Users />} />
               <Route path="orders" element={<Orders />} />
-              <Route path="admins" element={<Admins />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
           </Routes>

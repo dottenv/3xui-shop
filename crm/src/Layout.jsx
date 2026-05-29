@@ -6,7 +6,6 @@ import {
   TeamOutlined,
   ShoppingCartOutlined,
   LogoutOutlined,
-  CrownOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
 } from '@ant-design/icons'
@@ -20,7 +19,6 @@ const menuItems = [
   { key: '/', icon: <DashboardOutlined />, label: 'Дашборд' },
   { key: '/users', icon: <TeamOutlined />, label: 'Пользователи' },
   { key: '/orders', icon: <ShoppingCartOutlined />, label: 'Заказы' },
-  { key: '/admins', icon: <CrownOutlined />, label: 'Администраторы' },
 ]
 
 export default function Layout() {
