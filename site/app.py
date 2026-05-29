@@ -7,21 +7,21 @@ from flask import Flask, render_template
 
 app = Flask(__name__)
 
-DATA_DIR = os.path.dirname(os.path.abspath(__file__))
 API_INTERNAL = os.getenv("API_INTERNAL_URL", "http://api:8000")
 
 _cache = {"value": False, "expires": 0}
+_plans_cache = {"value": {}, "expires": 0}
+_config_cache = {"value": {}, "expires": 0}
 CACHE_TTL = 30
 
 
-def load_json(name):
-    path = os.path.join(DATA_DIR, name)
-    with open(path, encoding="utf-8") as f:
-        return json.load(f)
-
-
-config = load_json("config.json")
-plans = load_json("plans.json")
+def _fetch(path):
+    try:
+        req = urllib.request.Request(f"{API_INTERNAL}{path}")
+        with urllib.request.urlopen(req, timeout=2) as resp:
+            return json.loads(resp.read())
+    except Exception:
+        return None
 
 
 def check_maintenance():
@@ -29,14 +29,29 @@ def check_maintenance():
     now = time.time()
     if now < _cache["expires"]:
         return _cache["value"]
-    try:
-        req = urllib.request.Request(f"{API_INTERNAL}/public/maintenance")
-        with urllib.request.urlopen(req, timeout=2) as resp:
-            data = json.loads(resp.read())
-            _cache = {"value": data.get("site", False), "expires": now + CACHE_TTL}
-    except Exception:
-        _cache = {"value": False, "expires": now + CACHE_TTL}
+    data = _fetch("/public/maintenance")
+    _cache = {"value": data.get("site", False) if data else False, "expires": now + CACHE_TTL}
     return _cache["value"]
+
+
+def get_config():
+    global _config_cache
+    now = time.time()
+    if now < _config_cache["expires"]:
+        return _config_cache["value"]
+    data = _fetch("/public/config?lang=ru")
+    _config_cache = {"value": data or {}, "expires": now + CACHE_TTL}
+    return _config_cache["value"]
+
+
+def get_plans():
+    global _plans_cache
+    now = time.time()
+    if now < _plans_cache["expires"]:
+        return _plans_cache["value"]
+    data = _fetch("/public/plans?lang=ru")
+    _plans_cache = {"value": data or {}, "expires": now + CACHE_TTL}
+    return _plans_cache["value"]
 
 
 @app.before_request
@@ -47,7 +62,7 @@ def maintenance_check():
 
 @app.context_processor
 def inject_globals():
-    return dict(config=config, plans=plans)
+    return dict(config=get_config(), plans=get_plans())
 
 
 @app.route("/")

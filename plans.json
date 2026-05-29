@@ -75,5 +75,69 @@
                 { "label": "Выделенный сервер", "enabled": true }
             ]
         }
-    ]
+    ],
+    "_en": {
+        "payment_methods": [
+            { "label": "Bank Cards" },
+            { "label": "Cryptocurrency" },
+            { "label": "E-wallets" }
+        ],
+        "plans": [
+            {
+                "name": "Starter",
+                "currency": "₽",
+                "period": "/mo",
+                "currency_year": "₽",
+                "desc": "For one device",
+                "badge": null,
+                "btn_text": "Choose",
+                "features": [
+                    { "label": "1 device" },
+                    { "label": "All servers" },
+                    { "label": "All protocols" },
+                    { "label": "24/7 Support" },
+                    { "label": "Trial period" },
+                    { "label": "Priority support", "enabled": false },
+                    { "label": "Yearly discount", "enabled": false }
+                ]
+            },
+            {
+                "name": "Optimal",
+                "currency": "₽",
+                "period": "/mo",
+                "currency_year": "₽",
+                "desc": "For the whole family",
+                "badge": "Recommended",
+                "btn_text": "Choose",
+                "features": [
+                    { "label": "3 devices" },
+                    { "label": "All servers" },
+                    { "label": "All protocols" },
+                    { "label": "Priority support" },
+                    { "label": "Trial period" },
+                    { "label": "Up to -30% yearly" },
+                    { "label": "Early access to new servers" }
+                ]
+            },
+            {
+                "name": "Maximum",
+                "currency": "₽",
+                "period": "/mo",
+                "currency_year": "₽",
+                "desc": "For all your devices",
+                "badge": null,
+                "btn_text": "Choose",
+                "features": [
+                    { "label": "5 devices" },
+                    { "label": "All servers" },
+                    { "label": "All protocols" },
+                    { "label": "VIP 24/7 Support" },
+                    { "label": "Trial period" },
+                    { "label": "Up to -40% yearly" },
+                    { "label": "Early access to features" },
+                    { "label": "Dedicated server" }
+                ]
+            }
+        ]
+    }
 }

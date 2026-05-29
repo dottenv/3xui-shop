@@ -125,6 +125,7 @@ MIGRATIONS: list[tuple[str, str]] = [
         );
         INSERT OR IGNORE INTO "settings" ("key", "value") VALUES ('maintenance_site', '0');
         INSERT OR IGNORE INTO "settings" ("key", "value") VALUES ('maintenance_app', '0');
+        INSERT OR IGNORE INTO "settings" ("key", "value") VALUES ('lang', 'ru');
     """),
 ]
 

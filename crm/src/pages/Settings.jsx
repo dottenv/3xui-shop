@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Card, Typography, Switch, message, Spin } from 'antd'
+import { Card, Typography, Switch, Select, message, Spin, Space } from 'antd'
 import {
-  SettingOutlined, GlobalOutlined, MobileOutlined,
+  SettingOutlined, GlobalOutlined, MobileOutlined, TranslationOutlined,
 } from '@ant-design/icons'
 import api from '../api'
 
@@ -9,13 +9,20 @@ const { Title, Text } = Typography
 
 export default function Settings() {
   const [settings, setSettings] = useState(null)
+  const [langs, setLangs] = useState(['ru'])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(null)
 
   useEffect(() => {
-    api.get('/admin/settings')
-      .then(({ data }) => setSettings(data))
-      .finally(() => setLoading(false))
+    Promise.all([
+      api.get('/admin/settings'),
+      api.get('/public/langs'),
+    ]).then(([s, l]) => {
+      const obj = {}
+      for (const row of s.data) obj[row.key] = row.value
+      setSettings(obj)
+      setLangs(l.data)
+    }).finally(() => setLoading(false))
   }, [])
 
   async function toggle(key) {
@@ -31,6 +38,16 @@ export default function Settings() {
       message.error('Ошибка')
     }
     setSaving(null)
+  }
+
+  async function saveLang(value) {
+    try {
+      await api.put('/admin/settings', { lang: value })
+      setSettings(prev => ({ ...prev, lang: value }))
+      message.success('Сохранено')
+    } catch {
+      message.error('Ошибка')
+    }
   }
 
   if (loading) return <Spin style={{ display: 'block', margin: '80px auto' }} />
@@ -87,6 +104,26 @@ export default function Settings() {
               loading={saving === 'maintenance_app'}
             />
           </div>
+        </Card>
+
+        <Card
+          title={
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <TranslationOutlined style={{ color: '#8b5cf6' }} />
+              <span>Язык (язык по умолчанию)</span>
+            </div>
+          }
+          style={{ flex: 1, minWidth: 300, borderRadius: 12 }}
+        >
+          <Space direction="vertical" style={{ width: '100%' }}>
+            <Text>Язык интерфейса по умолчанию для приложения</Text>
+            <Select
+              value={settings?.lang || 'ru'}
+              onChange={saveLang}
+              style={{ width: 200 }}
+              options={langs.map(l => ({ value: l, label: l === 'ru' ? 'Русский' : l === 'en' ? 'English' : l }))}
+            />
+          </Space>
         </Card>
       </div>
     </div>
