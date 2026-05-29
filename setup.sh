@@ -69,6 +69,11 @@ echo "[5/7] Настройка .env..."
 if [ ! -f .env ]; then
     cp .env.example .env
     echo ".env создан из шаблона"
+    echo "⚠️  Обязательно заполните .env перед запуском:"
+    echo "   - LETSENCRYPT_EMAIL (нужен для SSL)"
+    echo "   - API_SECRET_KEY (сгенерируйте случайную строку)"
+    echo "   - Убедитесь что DNS для ${SITE_DOMAIN}, ${APP_DOMAIN}, ${CRM_DOMAIN}"
+    echo "     указывают на IP этого сервера (иначе SSL не выпустится)"
 else
     echo ".env уже существует, пропускаю"
 fi
