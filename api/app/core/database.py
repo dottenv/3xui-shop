@@ -1,12 +1,19 @@
 from tortoise import Tortoise
 from app.core.config import settings
 
-# Tortoise ORM 0.21 generates INT PRIMARY KEY for SQLite,
-# but SQLite requires INTEGER PRIMARY KEY for auto-increment.
-# Using raw SQL guarantees correct schema.
+# Tortoise ORM 0.21 генерирует INT PRIMARY KEY для SQLite,
+# но SQLite требует INTEGER PRIMARY KEY для автоинкремента.
+# Создаём таблицы вручную с правильной схемой.
 
-INIT_SQL = """
-CREATE TABLE IF NOT EXISTS "users" (
+DROP_AND_CREATE_SQL = """
+DROP TABLE IF EXISTS "referrer_rewards";
+DROP TABLE IF EXISTS "referrals";
+DROP TABLE IF EXISTS "promocodes";
+DROP TABLE IF EXISTS "transactions";
+DROP TABLE IF EXISTS "servers";
+DROP TABLE IF EXISTS "users";
+
+CREATE TABLE "users" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "uuid" CHAR(36) NOT NULL UNIQUE,
     "email" VARCHAR(255) UNIQUE,
@@ -24,7 +31,7 @@ CREATE TABLE IF NOT EXISTS "users" (
     "updated_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS "servers" (
+CREATE TABLE "servers" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "name" VARCHAR(100) NOT NULL,
     "host" VARCHAR(255) NOT NULL,
@@ -43,7 +50,7 @@ CREATE TABLE IF NOT EXISTS "servers" (
     "updated_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS "transactions" (
+CREATE TABLE "transactions" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "uuid" CHAR(36) NOT NULL UNIQUE,
     "user_id" INT NOT NULL,
@@ -62,7 +69,7 @@ CREATE TABLE IF NOT EXISTS "transactions" (
 );
 CREATE INDEX IF NOT EXISTS "idx_transaction_user_id" ON "transactions" ("user_id");
 
-CREATE TABLE IF NOT EXISTS "promocodes" (
+CREATE TABLE "promocodes" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "code" VARCHAR(50) NOT NULL UNIQUE,
     "duration_days" INT NOT NULL DEFAULT 30,
@@ -73,7 +80,7 @@ CREATE TABLE IF NOT EXISTS "promocodes" (
     "created_at" TIMESTAMP NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS "referrals" (
+CREATE TABLE "referrals" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "referrer_id" INT NOT NULL,
     "referred_id" INT NOT NULL UNIQUE,
@@ -83,7 +90,7 @@ CREATE TABLE IF NOT EXISTS "referrals" (
 CREATE INDEX IF NOT EXISTS "idx_referrals_referrer" ON "referrals" ("referrer_id");
 CREATE INDEX IF NOT EXISTS "idx_referrals_referred" ON "referrals" ("referred_id");
 
-CREATE TABLE IF NOT EXISTS "referrer_rewards" (
+CREATE TABLE "referrer_rewards" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "user_id" INT NOT NULL,
     "referral_id" INT NOT NULL,
@@ -103,7 +110,7 @@ async def init_db():
         modules={"models": ["app.core.models"]},
     )
     conn = Tortoise.get_connection("default")
-    await conn.execute_script(INIT_SQL)
+    await conn.execute_script(DROP_AND_CREATE_SQL)
 
 
 async def close_db():
