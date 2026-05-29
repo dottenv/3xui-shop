@@ -49,6 +49,7 @@ async def get_subscription(user: User = Depends(get_current_user)):
         "plan_id": sub.plan_id,
         "server_id": sub.server_id,
         "server_name": server.name if server else f"#{sub.server_id}",
+        "server_online": server.is_online if server else False,
         "client_uuid": sub.client_uuid,
         "devices": sub.devices,
         "duration_days": sub.duration_days,
@@ -95,20 +96,19 @@ async def get_subscription_config(user: User = Depends(get_current_user)):
     name = quote(f"{server.name} — CWIM")
 
     links = []
-    if server.protocol == "vless":
-        params = f"type=tcp&security=reality&flow={server.config_flow}&pbk={server.config_public_key}&fp=chrome&sni={server.config_sni}&sid={server.config_short_id}"
-        vless = f"vless://{uuid}@{host}:{port}?{params}#{name}"
-        links.append({"protocol": "vless", "link": vless})
-    elif server.protocol == "trojan":
-        params = f"security=tls&sni={server.config_sni or host}&type=tcp"
-        trojan = f"trojan://{uuid}@{host}:{port}?{params}#{name}"
-        links.append({"protocol": "trojan", "link": trojan})
-    elif server.protocol == "shadowsocks":
-        # Simple shadowsocks link (just a placeholder)
-        ss = f"ss://{uuid}@{host}:{port}#{name}"
-        links.append({"protocol": "shadowsocks", "link": ss})
-    else:
-        links.append({"protocol": server.protocol, "link": f"{server.protocol}://{uuid}@{host}:{port}#{name}"})
+    base_params = f"pbk={server.config_public_key}&fp=chrome&sni={server.config_sni}"
+
+    # VLESS + Reality (TCP)
+    params1 = f"type=tcp&security=reality&flow={server.config_flow}&{base_params}&sid={server.config_short_id}"
+    links.append({"protocol": "vless-reality-tcp", "link": f"vless://{uuid}@{host}:{port}?{params1}#{name}"})
+
+    # VLESS + Reality (XHTTP)
+    params2 = f"type=xhttp&security=reality&flow={server.config_flow}&{base_params}&sid={server.config_short_id}"
+    links.append({"protocol": "vless-reality-xhttp", "link": f"vless://{uuid}@{host}:{port}?{params2}#{name}"})
+
+    # Direct subscription link (Sing-box / Outline)
+    sub_link = f"vless://{uuid}@{host}:{port}?{params1}&sub=true#{name}"
+    links.append({"protocol": "subscription", "link": sub_link})
 
     return {
         "server_name": server.name,

@@ -4,6 +4,12 @@ import { CardSkeleton } from '../ui'
 import { Link } from 'react-router-dom'
 import { useConfig } from '../ConfigContext'
 
+const planLabels = {
+  start: 'Старт',
+  optimal: 'Оптимальный',
+  maximum: 'Максимум',
+}
+
 const quickLinks = [
   { to: '/pricing', key: 'pricing', icon: 'M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 15a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM13 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM13 15a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z' },
   { to: '/support', key: 'support', icon: 'M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z' },
@@ -37,19 +43,34 @@ export default function Dashboard() {
             {isPremium && <span className="text-xs text-green-400 font-medium">{d('active')}</span>}
           </div>
           {isPremium ? (
-            <div className="space-y-2">
-              <p className="text-lg font-bold">{sub.plan_id || '—'}</p>
-              <div className="flex items-center gap-4 text-sm text-muted">
-                <span>{d('servers')} {sub.server_name || `#${sub.server_id}`}</span>
-                <span>ID: {sub.client_uuid ? sub.client_uuid.slice(0, 8) + '\u2026' : '—'}</span>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-lg font-bold">{planLabels[sub.plan_id] || sub.plan_id}</p>
+                  <div className="flex items-center gap-2 text-xs text-muted mt-0.5">
+                    <span>{sub.server_name || `#${sub.server_id}`}</span>
+                    <span className={`w-1.5 h-1.5 rounded-full ${sub.server_online ? 'bg-green-400' : 'bg-red-400'}`} />
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-medium">{sub.devices} устр.</p>
+                  <p className="text-xs text-muted">{sub.days_left} дн.</p>
+                </div>
               </div>
-              <div className="w-full bg-bg rounded-full h-2 mt-1">
+              <div className="w-full bg-bg rounded-full h-2">
                 <div className="bg-primary h-2 rounded-full" style={{ width: sub.usage_pct || '0%' }} />
               </div>
-              <p className="text-xs text-muted">{sub.days_left || '—'} {t('app.common.days_left')}</p>
+              <div className="flex items-center justify-between text-xs text-muted">
+                <span>{(sub.traffic_up + sub.traffic_down) > 0 ? ((sub.traffic_up + sub.traffic_down) / 1024 / 1024 / 1024).toFixed(1) + ' GB' : '0 GB'}</span>
+                <span>{(sub.traffic_limit / 1024 / 1024 / 1024).toFixed(0) + ' GB'}</span>
+              </div>
+              <p className="text-xs text-muted">Истекает: {new Date(sub.expires_at).toLocaleDateString('ru-RU')}</p>
+              <Link to="/servers" className="block w-full bg-primary text-white rounded-xl py-3 text-sm font-medium text-center hover:bg-primary-dark transition-colors shadow-lg shadow-primary/20">
+                Подключиться
+              </Link>
             </div>
           ) : (
-            <div>
+            <div className="space-y-3">
               <p className="text-muted text-sm">{d('no_subscription')}</p>
           <Link to="/pricing" className="block w-full bg-primary text-white rounded-xl py-3.5 text-sm font-medium text-center hover:bg-primary-dark transition-colors shadow-lg shadow-primary/20">
               {d('choose_plan')}

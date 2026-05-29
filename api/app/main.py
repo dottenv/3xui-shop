@@ -5,12 +5,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import init_db, close_db
 from app.core.middleware import ActiveUserMiddleware
+from app.core.services.server_health import start_health_checker
 from app.routes import auth, user, payment, admin, webhooks, public, admin_settings
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     await init_db()
+    start_health_checker()
     yield
     await close_db()
 
