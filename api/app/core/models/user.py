@@ -20,6 +20,12 @@ class User(Model):
     is_active = fields.BooleanField(default=True)
     is_admin = fields.BooleanField(default=False)
 
+    registration_ip = fields.CharField(max_length=45, null=True)
+    registration_user_agent = fields.TextField(null=True)
+    last_ip = fields.CharField(max_length=45, null=True)
+    last_login = fields.DatetimeField(null=True)
+    last_user_agent = fields.TextField(null=True)
+
     referral_code = fields.CharField(max_length=20, unique=True, null=True)
     referred_by = fields.IntField(null=True)
 

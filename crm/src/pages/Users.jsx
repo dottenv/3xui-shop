@@ -5,7 +5,7 @@ import {
 } from 'antd'
 import {
   SearchOutlined, EditOutlined, StopOutlined, CheckCircleOutlined,
-  CrownOutlined, DeleteOutlined,
+  CrownOutlined, DeleteOutlined, LockOutlined,
 } from '@ant-design/icons'
 import api from '../api'
 
@@ -80,6 +80,17 @@ export default function Users() {
     } catch (err) { message.error(err.response?.data?.detail || 'Ошибка') }
   }
 
+  async function addToWhitelist(user) {
+    try {
+      await api.post(`/admin/users/${user.id}/whitelist`)
+      message.success(`IP ${user.last_ip || user.registration_ip} добавлен в Whitelist`)
+    } catch (err) {
+      const detail = err.response?.data?.detail || 'Ошибка'
+      if (detail === 'IP already in whitelist') message.warning('IP уже в whitelist')
+      else message.error(detail)
+    }
+  }
+
   const [contextUser, setContextUser] = useState(null)
 
   function handleContextAction({ key }) {
@@ -89,6 +100,7 @@ export default function Users() {
     if (key === 'edit') openEdit(user)
     if (key === 'block') toggleBlock(user)
     if (key === 'admin') toggleAdmin(user)
+    if (key === 'whitelist') addToWhitelist(user)
     if (key === 'delete') Modal.confirm({
       title: 'Удалить пользователя',
       content: `Вы уверены, что хотите удалить ${user.email || `пользователя #${user.id}`}?`,
@@ -104,6 +116,8 @@ export default function Users() {
       { key: 'edit', icon: <EditOutlined />, label: 'Редактировать' },
       { key: 'block', icon: user.is_active ? <StopOutlined /> : <CheckCircleOutlined />, label: user.is_active ? 'Заблокировать' : 'Разблокировать' },
       { key: 'admin', icon: <CrownOutlined />, label: user.is_admin ? 'Снять админа' : 'Назначить админом' },
+      { type: 'divider' },
+      { key: 'whitelist', icon: <LockOutlined />, label: 'Добавить в Whitelist', disabled: !user.last_ip && !user.registration_ip },
       { type: 'divider' },
       { key: 'delete', icon: <DeleteOutlined />, label: 'Удалить', danger: true },
     ],
@@ -125,6 +139,18 @@ export default function Users() {
       render: (v, r) => [v, r.last_name].filter(Boolean).join(' ') || <Text type="secondary">—</Text>,
     },
     {
+      title: 'IP-адрес',
+      dataIndex: 'last_ip',
+      render: (v, r) => v || r.registration_ip || <Text type="secondary">—</Text>,
+      width: 150,
+    },
+    {
+      title: 'Последний вход',
+      dataIndex: 'last_login',
+      render: (v) => v ? new Date(v).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : <Text type="secondary">—</Text>,
+      width: 150,
+    },
+    {
       title: 'Статус',
       dataIndex: 'is_active',
       render: (v) => <Tag color={v ? 'green' : 'red'}>{v ? 'Активен' : 'Заблокирован'}</Tag>,
@@ -139,7 +165,7 @@ export default function Users() {
       width: 80,
     },
     {
-      title: 'Дата',
+      title: 'Регистрация',
       dataIndex: 'created_at',
       render: (v) => v ? new Date(v).toLocaleDateString('ru-RU') : '—',
       width: 110,

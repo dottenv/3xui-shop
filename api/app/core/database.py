@@ -16,6 +16,11 @@ CREATE TABLE IF NOT EXISTS "users" (
     "last_name" VARCHAR(100),
     "is_active" INT NOT NULL DEFAULT 1,
     "is_admin" INT NOT NULL DEFAULT 0,
+    "registration_ip" VARCHAR(45),
+    "registration_user_agent" TEXT,
+    "last_ip" VARCHAR(45),
+    "last_login" TIMESTAMP,
+    "last_user_agent" TEXT,
     "referral_code" VARCHAR(20) UNIQUE,
     "referred_by" INT,
     "created_at" TIMESTAMP NOT NULL,
@@ -163,25 +168,30 @@ async def run_migrations():
         await conn.execute_query(f'INSERT INTO "{SCHEMA_MIGRATIONS_TABLE}" ("name") VALUES (?)', [name])
         print(f"[db] Applied migration: {name}")
 
+    # Migration 004 — user IP tracking (columns may already exist on fresh DB)
+    if "004_user_tracking" not in applied:
+        col_info = await conn.execute_query("PRAGMA table_info('users')")
+        col_names = {r["name"] for r in col_info[1]}
+        track_cols = [
+            ("registration_ip", "VARCHAR(45)"),
+            ("registration_user_agent", "TEXT"),
+            ("last_ip", "VARCHAR(45)"),
+            ("last_login", "TIMESTAMP"),
+            ("last_user_agent", "TEXT"),
+        ]
+        added = False
+        for col, col_type in track_cols:
+            if col not in col_names:
+                await conn.execute_query(f'ALTER TABLE "users" ADD COLUMN "{col}" {col_type}')
+                added = True
+        if added:
+            await conn.execute_query(f'INSERT INTO "{SCHEMA_MIGRATIONS_TABLE}" ("name") VALUES (?)', ["004_user_tracking"])
+            print("[db] Applied migration: 004_user_tracking")
+        else:
+            # Still mark applied so we don't check PRAGMA every boot
+            await conn.execute_query(f'INSERT INTO "{SCHEMA_MIGRATIONS_TABLE}" ("name") VALUES (?)', ["004_user_tracking"])
+            print("[db] Migration 004_user_tracking: columns already present, skipped")
 
-async def init_db():
-    await Tortoise.init(
-        db_url=settings.DATABASE_URL,
-        modules={"models": ["app.core.models"]},
-    )
-    conn = Tortoise.get_connection("default")
-
-    # Check if any of our tables already exist (fresh DB or existing)
-    existing = await conn.execute_query(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('users','servers','transactions')"
-    )
-    if not existing[1]:
-        print("[db] Fresh database — creating schema...")
-        await conn.execute_script(BASE_SCHEMA)
-    else:
-        print("[db] Database exists — checking schema version...")
-
-    await run_migrations()
     print("[db] Schema up to date.")
 
 

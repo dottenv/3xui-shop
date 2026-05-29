@@ -9,7 +9,7 @@ from app.core.security import (
     create_admin_access_token, create_admin_refresh_token,
     decode_token,
 )
-from app.core.models import Admin, User, Server, Transaction
+from app.core.models import Admin, User, Server, Transaction, IpWhitelist
 
 router = APIRouter()
 admin_bearer = HTTPBearer(auto_error=False)
@@ -61,6 +61,9 @@ class UserRow(BaseModel):
     last_name: Optional[str] = None
     is_active: bool
     is_admin: bool
+    last_ip: Optional[str] = None
+    last_login: Optional[datetime] = None
+    registration_ip: Optional[str] = None
     created_at: datetime
 
     class Config:
@@ -210,6 +213,25 @@ async def toggle_user_admin(user_id: int, admin: Admin = Depends(get_current_adm
     user.is_admin = not user.is_admin
     await user.save()
     return {"id": user.id, "is_admin": user.is_admin}
+
+
+@router.post("/users/{user_id}/whitelist")
+async def add_user_to_whitelist(user_id: int, admin: Admin = Depends(get_current_admin)):
+    user = await User.get_or_none(id=user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    ip = user.last_ip or user.registration_ip
+    if not ip:
+        raise HTTPException(status_code=400, detail="User has no IP address recorded")
+    existing = await IpWhitelist.filter(ip_address=ip).first()
+    if existing:
+        raise HTTPException(status_code=409, detail="IP already in whitelist")
+    row = await IpWhitelist.create(
+        ip_address=ip,
+        comment=f"User: {user.email or f'#{user.id}'}",
+        created_by=admin.id,
+    )
+    return {"id": row.id, "ip_address": row.ip_address, "comment": row.comment, "is_active": row.is_active}
 
 
 @router.delete("/users/{user_id}")
