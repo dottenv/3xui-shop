@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, Link } from 'react-router-dom'
 import { useAuth } from './AuthContext'
 
 const tabs = [
@@ -7,16 +7,21 @@ const tabs = [
 ]
 
 export default function Layout({ children }) {
-  const { user, logout } = useAuth()
+  const { user } = useAuth()
 
   return (
     <div className="min-h-screen bg-bg text-white flex flex-col">
-      <header className="sticky top-0 z-40 bg-bg/95 backdrop-blur border-b border-border px-4 h-12 flex items-center justify-between">
-        <span className="font-bold text-base">CWIM</span>
-        <button onClick={logout} className="text-muted text-sm hover:text-white transition-colors">Выйти</button>
+      <header className="sticky top-0 z-40 bg-bg/95 backdrop-blur border-b border-border px-4 h-14 flex items-center justify-between">
+        <span className="font-bold text-lg tracking-tight">CWIM</span>
+        <Link
+          to="/profile"
+          className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center text-primary text-sm font-bold hover:bg-primary/30 transition-colors"
+        >
+          {(user?.email?.[0] || '?').toUpperCase()}
+        </Link>
       </header>
 
-      <main className="flex-1 px-4 pb-20 pt-4 overflow-y-auto">
+      <main className="flex-1 px-4 pb-24 pt-5 overflow-y-auto">
         {children}
       </main>
 
