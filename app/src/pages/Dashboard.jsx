@@ -1,23 +1,27 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../AuthContext'
-import { apiJson } from '../api'
+import { apiCached } from '../api'
+import { CardSkeleton } from '../ui'
 
 export default function Dashboard() {
   const { user } = useAuth()
   const [sub, setSub] = useState(null)
+  const [subLoading, setSubLoading] = useState(true)
 
   useEffect(() => {
-    apiJson('/user/subscription').then(setSub).catch(() => {})
+    apiCached('/user/subscription').then(setSub).catch(() => {}).finally(() => setSubLoading(false))
   }, [])
 
   const initial = (user?.first_name?.[0] || user?.email?.[0] || '?').toUpperCase()
   const isPremium = sub?.is_active
-  const joinDate = user?.created_at ? new Date(user.created_at).toLocaleDateString('ru-RU', { month: 'long', day: 'numeric', year: 'numeric' }) : '—'
+  const joinDate = user?.created_at
+    ? new Date(user.created_at).toLocaleDateString('ru-RU', { month: 'long', day: 'numeric', year: 'numeric' })
+    : '—'
 
   return (
     <div className="space-y-4">
 
-      {/* Greeting + avatar */}
+      {/* Greeting */}
       <div className="flex items-center gap-4 bg-surface border border-border rounded-2xl p-5">
         <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-white text-xl font-bold shrink-0 shadow-lg shadow-primary/20">
           {initial}
@@ -35,32 +39,34 @@ export default function Dashboard() {
       </div>
 
       {/* Subscription */}
-      <div className="bg-surface border border-border rounded-2xl p-5 space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted">Подписка</h2>
-          {isPremium && <span className="text-xs text-green-400 font-medium">Активна</span>}
+      {subLoading ? <CardSkeleton /> : (
+        <div className="bg-surface border border-border rounded-2xl p-5 space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted">Подписка</h2>
+            {isPremium && <span className="text-xs text-green-400 font-medium">Активна</span>}
+          </div>
+          {isPremium ? (
+            <div className="space-y-2">
+              <p className="text-lg font-bold">Оптимальный</p>
+              <div className="flex items-center gap-4 text-sm text-muted">
+                <span>Сервер #{sub.server_id || '—'}</span>
+                <span>ID: {sub.vpn_id ? sub.vpn_id.slice(0, 8) + '…' : '—'}</span>
+              </div>
+              <div className="w-full bg-bg rounded-full h-2 mt-1">
+                <div className="bg-primary h-2 rounded-full" style={{ width: '65%' }} />
+              </div>
+              <p className="text-xs text-muted">18 дней осталось</p>
+            </div>
+          ) : (
+            <div>
+              <p className="text-muted text-sm">Нет активной подписки</p>
+              <button className="mt-3 w-full bg-primary text-white rounded-xl py-3.5 text-sm font-medium hover:bg-primary-dark transition-colors shadow-lg shadow-primary/20">
+                Выбрать тариф
+              </button>
+            </div>
+          )}
         </div>
-        {isPremium ? (
-          <div className="space-y-2">
-            <p className="text-lg font-bold">Оптимальный</p>
-            <div className="flex items-center gap-4 text-sm text-muted">
-              <span>Сервер #{sub.server_id || '—'}</span>
-              <span>ID: {sub.vpn_id ? sub.vpn_id.slice(0, 8) + '…' : '—'}</span>
-            </div>
-            <div className="w-full bg-bg rounded-full h-2 mt-1">
-              <div className="bg-primary h-2 rounded-full" style={{ width: '65%' }} />
-            </div>
-            <p className="text-xs text-muted">18 дней осталось</p>
-          </div>
-        ) : (
-          <div>
-            <p className="text-muted text-sm">Нет активной подписки</p>
-            <button className="mt-3 w-full bg-primary text-white rounded-xl py-3.5 text-sm font-medium hover:bg-primary-dark transition-colors shadow-lg shadow-primary/20">
-              Выбрать тариф
-            </button>
-          </div>
-        )}
-      </div>
+      )}
 
       {/* Balance */}
       <div className="bg-surface border border-border rounded-2xl p-5 flex items-center justify-between">
