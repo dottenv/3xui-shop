@@ -28,13 +28,21 @@ apt-get install -y \
 
 echo "[3/7] Установка Docker..."
 if ! command -v docker &> /dev/null; then
+    . /etc/os-release
+
+    if [ "$ID" = "ubuntu" ]; then
+        DOCKER_OS="ubuntu"
+    else
+        DOCKER_OS="debian"
+    fi
+
     install -m 0755 -d /etc/apt/keyrings
-    curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+    curl -fsSL "https://download.docker.com/linux/${DOCKER_OS}/gpg" | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
     chmod a+r /etc/apt/keyrings/docker.gpg
 
     echo \
-      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \
-      $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/${DOCKER_OS} \
+      ${VERSION_CODENAME} stable" | \
       tee /etc/apt/sources.list.d/docker.list > /dev/null
 
     apt-get update
