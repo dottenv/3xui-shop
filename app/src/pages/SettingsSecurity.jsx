@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { apiJson } from '../api'
 import { Spinner, PasswordInput, BackButton } from '../ui'
+import { useConfig } from '../ConfigContext'
 
 export default function SettingsSecurity() {
+  const { t } = useConfig()
   const [current, setCurrent] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -32,9 +34,9 @@ export default function SettingsSecurity() {
 
   return (
     <div className="space-y-6">
-      <BackButton />
+      <BackButton>{t('app.common.back')}</BackButton>
 
-      <h1 className="text-xl font-bold">Безопасность</h1>
+      <h1 className="text-xl font-bold">{t('app.pages.settings.security')}</h1>
 
       <form onSubmit={handleSubmit} className="bg-surface border border-border rounded-2xl p-5 space-y-4">
         {msg && (
@@ -50,7 +52,7 @@ export default function SettingsSecurity() {
         <button type="submit" disabled={saving}
           className="w-full bg-primary text-white rounded-xl py-3.5 text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
           {saving && <Spinner />}
-          {saving ? 'Сохранение...' : 'Изменить пароль'}
+          {saving ? t('app.common.loading') : 'Изменить пароль'}
         </button>
       </form>
     </div>

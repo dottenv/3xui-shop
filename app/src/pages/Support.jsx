@@ -1,13 +1,16 @@
 import { Link } from 'react-router-dom'
 import { BackButton } from '../ui'
+import { useConfig } from '../ConfigContext'
 
 export default function Support() {
+  const { t } = useConfig()
+
   return (
     <div className="space-y-6">
       <BackButton />
       <div>
-        <h1 className="text-xl font-bold">Поддержка</h1>
-        <p className="text-muted text-sm mt-1">Мы всегда на связи</p>
+        <h1 className="text-xl font-bold">{t('app.pages.support.title')}</h1>
+        <p className="text-muted text-sm mt-1">{t('app.pages.support.subtitle')}</p>
       </div>
 
       <div className="space-y-3">
@@ -18,7 +21,7 @@ export default function Support() {
             </svg>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-medium">Telegram</p>
+            <p className="font-medium">{t('app.pages.support.telegram')}</p>
             <p className="text-xs text-muted mt-0.5">@cwim_support</p>
           </div>
           <svg className="w-4 h-4 text-muted shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -33,7 +36,7 @@ export default function Support() {
             </svg>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-medium">Email</p>
+            <p className="font-medium">{t('app.pages.support.email')}</p>
             <p className="text-xs text-muted mt-0.5">support@cwim.ru</p>
           </div>
           <svg className="w-4 h-4 text-muted shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -43,7 +46,7 @@ export default function Support() {
       </div>
 
       <div className="bg-surface border border-border rounded-2xl p-5 space-y-4">
-        <h2 className="font-semibold">Частые вопросы</h2>
+        <h2 className="font-semibold">{t('app.pages.support.faq')}</h2>
         {[
           { q: 'Как подключиться к VPN?', a: 'Установите приложение из инструкций, скопируйте ключ и подключитесь к любому серверу.' },
           { q: 'Сколько устройств можно подключить?', a: 'Количество устройств зависит от тарифа — от 1 до 10.' },
@@ -62,7 +65,7 @@ export default function Support() {
       </div>
 
       <Link to="/guides" className="block bg-surface border border-border rounded-2xl p-5 text-center hover:border-primary transition-colors">
-        <p className="font-medium">Инструкции по настройке</p>
+        <p className="font-medium">{t('app.pages.guides.title')}</p>
         <p className="text-xs text-muted mt-1">iOS, Android, Windows, Mac</p>
       </Link>
     </div>

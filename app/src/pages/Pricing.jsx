@@ -3,8 +3,7 @@ import { useConfig } from '../ConfigContext'
 import { BackButton } from '../ui'
 
 export default function Pricing() {
-  const { config, plans } = useConfig()
-  const t = config?._en?.app?.pages?.pricing || {}
+  const { t, plans } = useConfig()
 
   if (!plans) return null
 
@@ -12,8 +11,8 @@ export default function Pricing() {
     <div className="space-y-6">
       <BackButton />
       <div>
-        <h1 className="text-xl font-bold">{t.title || 'Тарифы'}</h1>
-        <p className="text-muted text-sm mt-1">{t.subtitle || 'Выберите подходящий план'}</p>
+        <h1 className="text-xl font-bold">{t('app.pages.pricing.title')}</h1>
+        <p className="text-muted text-sm mt-1">{t('app.pages.pricing.subtitle')}</p>
       </div>
 
       <div className="space-y-4">
@@ -44,15 +43,15 @@ export default function Pricing() {
               ))}
             </ul>
             <button className="w-full bg-primary text-white rounded-xl py-3.5 text-sm font-medium hover:bg-primary-dark transition-colors shadow-lg shadow-primary/20">
-              {t.buy || 'Купить'} — {p.price} {p.currency}
+              {t('app.pages.pricing.buy')} — {p.price} {p.currency}
             </button>
           </div>
         ))}
       </div>
 
       <div className="bg-surface border border-border rounded-2xl p-5 text-center space-y-2">
-        <p className="text-sm text-muted">{t.questions || 'Есть вопросы по тарифам?'}</p>
-        <Link to="/support" className="text-sm text-primary font-medium hover:underline">{t.contact_support || 'Связаться с поддержкой'}</Link>
+        <p className="text-sm text-muted">{t('app.pages.pricing.questions')}</p>
+        <Link to="/support" className="text-sm text-primary font-medium hover:underline">{t('app.pages.pricing.contact_support')}</Link>
       </div>
     </div>
   )

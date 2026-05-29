@@ -7,14 +7,15 @@ const langMeta = {
 }
 
 export default function SettingsLanguage() {
-  const { lang, langs, setLang } = useConfig()
+  const { lang, langs, setLang, t } = useConfig()
+  const label = t('app.pages.settings.language')
 
   return (
     <div className="space-y-6">
-      <BackButton />
+      <BackButton>{t('app.common.back')}</BackButton>
 
-      <h1 className="text-xl font-bold">Язык</h1>
-      <p className="text-sm text-muted -mt-4">Выберите язык интерфейса</p>
+      <h1 className="text-xl font-bold">{label}</h1>
+      <p className="text-sm text-muted -mt-4">{lang === 'en' ? 'Choose interface language' : 'Выберите язык интерфейса'}</p>
 
       <div className="bg-surface border border-border rounded-2xl divide-y divide-border/50 overflow-hidden">
         {langs.map((code, i) => {

@@ -140,6 +140,19 @@
         ]
     },
     "_langs": ["ru", "en"],
+    "app": {
+        "pages": {
+            "login": { "title": "С возвращением", "email_label": "Email", "password_label": "Пароль", "submit": "Войти", "no_account": "Нет аккаунта?", "register_link": "Зарегистрироваться" },
+            "register": { "title": "Создать аккаунт", "submit": "Зарегистрироваться", "has_account": "Уже есть аккаунт?", "login_link": "Войти" },
+            "dashboard": { "subscription": "Подписка", "active": "Активна", "no_subscription": "Нет активной подписки", "choose_plan": "Выбрать тариф", "balance": "Баланс", "servers": "Серверы", "all": "Все", "quick_actions": "Быстрые действия", "history": "История" },
+            "settings": { "title": "Настройки", "personal": "Личные данные", "security": "Безопасность", "language": "Язык", "theme": "Тема" },
+            "pricing": { "title": "Тарифы", "subtitle": "Выберите подходящий план", "buy": "Купить", "questions": "Есть вопросы по тарифам?", "contact_support": "Связаться с поддержкой" },
+            "servers": { "title": "Серверы", "available": "доступен", "maintenance": "на обслуживании", "connect": "Подключиться", "offline": "Недоступен" },
+            "support": { "title": "Поддержка", "subtitle": "Мы здесь, чтобы помочь", "email": "Написать на почту", "telegram": "Telegram", "faq": "FAQ" },
+            "guides": { "title": "Инструкции", "subtitle": "Как настроить на ваших устройствах" }
+        },
+        "common": { "back": "Назад", "save": "Сохранить", "cancel": "Отмена", "delete": "Удалить", "loading": "Загрузка", "days_left": "дн.", "clients": "клиентов", "load": "Нагрузка" }
+    },
     "_en": {
         "brand": { "tagline": "Fast & Secure VPN" },
         "nav": [

@@ -1,4 +1,5 @@
 import { BackButton } from '../ui'
+import { useConfig } from '../ConfigContext'
 
 const servers = [
   { name: 'Netherlands', flag: '🇳🇱', city: 'Amsterdam', ping: 45, load: 62, online: true, clients: 124, max: 200, ip: 'ams-01.cwim.ru' },
@@ -12,6 +13,7 @@ const servers = [
 ]
 
 export default function Servers() {
+  const { t } = useConfig()
   const online = servers.filter(s => s.online)
   const offline = servers.filter(s => !s.online)
 
@@ -19,8 +21,8 @@ export default function Servers() {
     <div className="space-y-6">
       <BackButton />
       <div>
-        <h1 className="text-xl font-bold">Серверы</h1>
-        <p className="text-muted text-sm mt-1">{online.length} доступно · {offline.length} на обслуживании</p>
+        <h1 className="text-xl font-bold">{t('app.pages.servers.title')}</h1>
+        <p className="text-muted text-sm mt-1">{online.length} {t('app.pages.servers.available')} · {offline.length} {t('app.pages.servers.maintenance')}</p>
       </div>
 
       <div className="space-y-2">
@@ -35,8 +37,8 @@ export default function Servers() {
               <p className="text-xs text-muted mt-0.5">{s.city} · {s.ip}</p>
               <div className="flex items-center gap-3 text-xs text-muted mt-1.5">
                 <span>{s.ping} ms</span>
-                <span>{s.clients}/{s.max} клиентов</span>
-                <span>Загрузка {s.load}%</span>
+                <span>{s.clients}/{s.max} {t('app.common.clients')}</span>
+                <span>{t('app.common.load')} {s.load}%</span>
               </div>
             </div>
             <div className="flex flex-col items-end gap-1">
@@ -44,7 +46,7 @@ export default function Servers() {
                 <div className={`h-1.5 rounded-full ${s.load > 70 ? 'bg-yellow-400' : 'bg-green-400'}`} style={{ width: `${s.load}%` }} />
               </div>
               <button disabled={!s.online} className={`text-xs font-medium px-3 py-1.5 rounded-lg transition-colors ${s.online ? 'bg-primary/10 text-primary hover:bg-primary/20' : 'bg-border/30 text-muted cursor-not-allowed'}`}>
-                {s.online ? 'Подключиться' : 'Offline'}
+                {s.online ? t('app.pages.servers.connect') : t('app.pages.servers.offline')}
               </button>
             </div>
           </div>

@@ -25,8 +25,21 @@ export function ConfigProvider({ children }) {
     apiJson(`/public/plans?lang=${lang}`).then(setPlans).catch(() => {})
   }, [lang])
 
+  const loading = config === null || plans === null
+
+  function t(path, fallback) {
+    if (!config) return fallback || path
+    const keys = path.split('.')
+    let val = config
+    for (const k of keys) {
+      if (val == null) return fallback || keys[keys.length - 1]
+      val = val[k]
+    }
+    return val ?? fallback ?? keys[keys.length - 1]
+  }
+
   return (
-    <ConfigContext.Provider value={{ config, plans, lang, langs, setLang }}>
+    <ConfigContext.Provider value={{ config, plans, lang, langs, setLang, t, loading }}>
       {children}
     </ConfigContext.Provider>
   )

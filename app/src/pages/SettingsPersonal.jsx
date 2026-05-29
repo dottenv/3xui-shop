@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { useAuth } from '../AuthContext'
+import { useConfig } from '../ConfigContext'
 import { apiJson } from '../api'
 import { Spinner, BackButton } from '../ui'
 
 export default function SettingsPersonal() {
+  const { t } = useConfig()
   const { user } = useAuth()
   const [firstName, setFirstName] = useState(user?.first_name || '')
   const [lastName, setLastName] = useState(user?.last_name || '')
@@ -31,9 +33,9 @@ export default function SettingsPersonal() {
 
   return (
     <div className="space-y-6">
-      <BackButton />
+      <BackButton>{t('app.common.back')}</BackButton>
 
-      <h1 className="text-xl font-bold">Личные данные</h1>
+      <h1 className="text-xl font-bold">{t('app.pages.settings.personal')}</h1>
 
       <form onSubmit={handleSave} className="bg-surface border border-border rounded-2xl p-5 space-y-4">
         {msg && (
@@ -43,7 +45,7 @@ export default function SettingsPersonal() {
         )}
 
         <div>
-          <label className="text-sm text-muted mb-1 block">Имя</label>
+          <label className="text-sm text-muted mb-1 block">{t('app.pages.settings.personal')}</label>
           <input type="text" value={firstName} onChange={e => setFirstName(e.target.value)}
             className="w-full bg-bg border border-border rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-primary transition-colors"
             placeholder="Не указано" />
@@ -66,7 +68,7 @@ export default function SettingsPersonal() {
         <button type="submit" disabled={saving}
           className="w-full bg-primary text-white rounded-xl py-3.5 text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
           {saving && <Spinner />}
-          {saving ? 'Сохранение...' : 'Сохранить'}
+          {saving ? t('app.common.loading') : t('app.common.save')}
         </button>
       </form>
     </div>

@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './AuthContext'
+import { useConfig } from './ConfigContext'
 import { useMaintenance } from './MaintenanceContext'
+import { Preloader } from './ui'
 import ProtectedRoute from './ProtectedRoute'
 import Layout from './Layout'
 import Login from './pages/Login'
@@ -23,8 +25,9 @@ const P = (Page) => <ProtectedRoute><Layout><Page /></Layout></ProtectedRoute>
 
 export default function App() {
   const { showMaintenance } = useMaintenance()
+  const { loading: configLoading } = useConfig()
 
-  if (showMaintenance === null) return null
+  if (showMaintenance === null || configLoading) return <Preloader />
 
   if (showMaintenance) return <MaintenancePage />
 
