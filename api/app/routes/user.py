@@ -110,7 +110,7 @@ async def get_subscription_config(user: User = Depends(get_current_user)):
         if not server or not sub.client_uuid:
             continue
 
-        host = server.host
+        host = server.address or server.host
         port = server.sub_port or server.port or 443
         uuid = sub.client_uuid
         label = f"Cwim VPN — {server.flag or ''} {server.name}".strip()
