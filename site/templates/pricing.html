@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тарифы - CWIM</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <a href="/" class="logo">CWIM</a>
+            <nav class="nav">
+                <a href="/features">Возможности</a>
+                <a href="/pricing">Тарифы</a>
+                <a href="/faq">FAQ</a>
+                <a href="https://app.cwim.ru" class="btn btn-primary">Войти</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="page-hero">
+            <div class="container">
+                <h1>Тарифы</h1>
+                <p>Выберите подходящий план для ваших задач</p>
+            </div>
+        </section>
+
+        <section class="pricing">
+            <div class="container">
+                <div class="pricing-grid">
+                    <div class="pricing-card">
+                        <h3>1 устройство</h3>
+                        <div class="price">
+                            <span class="amount">250 &#8381;</span>
+                            <span class="period">/ 30 дней</span>
+                        </div>
+                        <ul class="features-list">
+                            <li>1 устройство</li>
+                            <li>Все серверы</li>
+                            <li>Все протоколы</li>
+                            <li>Поддержка 24/7</li>
+                        </ul>
+                        <a href="https://app.cwim.ru" class="btn btn-primary btn-block">Выбрать</a>
+                    </div>
+
+                    <div class="pricing-card featured">
+                        <div class="badge">Популярный</div>
+                        <h3>3 устройства</h3>
+                        <div class="price">
+                            <span class="amount">500 &#8381;</span>
+                            <span class="period">/ 30 дней</span>
+                        </div>
+                        <ul class="features-list">
+                            <li>3 устройства</li>
+                            <li>Все серверы</li>
+                            <li>Все протоколы</li>
+                            <li>Приоритетная поддержка</li>
+                        </ul>
+                        <a href="https://app.cwim.ru" class="btn btn-primary btn-block">Выбрать</a>
+                    </div>
+
+                    <div class="pricing-card">
+                        <h3>5 устройств</h3>
+                        <div class="price">
+                            <span class="amount">750 &#8381;</span>
+                            <span class="period">/ 30 дней</span>
+                        </div>
+                        <ul class="features-list">
+                            <li>5 устройств</li>
+                            <li>Все серверы</li>
+                            <li>Все протоколы</li>
+                            <li>Приоритетная поддержка</li>
+                        </ul>
+                        <a href="https://app.cwim.ru" class="btn btn-primary btn-block">Выбрать</a>
+                    </div>
+                </div>
+
+                <div class="pricing-note">
+                    <p>Также доступны тарифы на 60, 180 и 365 дней со скидкой до 40%.</p>
+                    <p>Способы оплаты: банковские карты, криптовалюта, электронные кошельки.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <span class="logo">CWIM</span>
+                    <p>Быстрый и безопасный VPN сервис</p>
+                </div>
+                <div class="footer-links">
+                    <a href="/features">Возможности</a>
+                    <a href="/pricing">Тарифы</a>
+                    <a href="/faq">FAQ</a>
+                    <a href="mailto:support@cwim.ru">Поддержка</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 CWIM. Все права защищены.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
