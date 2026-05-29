@@ -18,13 +18,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
-app.include_router(user.router, prefix="/api/user", tags=["user"])
-app.include_router(payment.router, prefix="/api/payment", tags=["payment"])
-app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
+# NOTE: Traefik strips /api prefix before forwarding
+app.include_router(auth.router, prefix="/auth", tags=["auth"])
+app.include_router(user.router, prefix="/user", tags=["user"])
+app.include_router(payment.router, prefix="/payment", tags=["payment"])
+app.include_router(admin.router, prefix="/admin", tags=["admin"])
 app.include_router(webhooks.router, prefix="/webhooks", tags=["webhooks"])
 
 
-@app.get("/api/health")
+@app.get("/health")
 async def health_check():
     return {"status": "ok"}

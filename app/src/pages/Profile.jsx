@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../AuthContext'
 import { apiJson } from '../api'
+import { Spinner } from '../ui'
 
 export default function Profile() {
   const { user, logout } = useAuth()
@@ -76,8 +77,9 @@ export default function Profile() {
 
         <button
           type="submit" disabled={saving}
-          className="w-full bg-primary text-white rounded-lg py-3 text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-50"
+          className="w-full bg-primary text-white rounded-lg py-3 text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
         >
+          {saving && <Spinner />}
           {saving ? 'Сохранение...' : 'Сохранить'}
         </button>
       </form>

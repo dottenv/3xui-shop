@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { useAuth } from '../AuthContext'
+import { PasswordInput, Spinner } from '../ui'
 
 export default function Login() {
   const { user, login } = useAuth()
@@ -44,19 +45,19 @@ export default function Login() {
             />
           </div>
 
-          <div>
-            <label className="text-sm text-muted mb-1 block">Пароль</label>
-            <input
-              type="password" required value={password} onChange={e => setPassword(e.target.value)}
-              className="w-full bg-surface border border-border rounded-lg px-4 py-3 text-white text-sm outline-none focus:border-primary transition-colors"
-              placeholder="••••••••"
-            />
-          </div>
+          <PasswordInput
+            id="login-password"
+            label="Пароль"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            placeholder="••••••••"
+          />
 
           <button
             type="submit" disabled={busy}
-            className="w-full bg-primary text-white rounded-lg py-3 font-medium text-sm hover:bg-primary-dark transition-colors disabled:opacity-50"
+            className="w-full bg-primary text-white rounded-lg py-3 font-medium text-sm hover:bg-primary-dark transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
           >
+            {busy && <Spinner />}
             {busy ? 'Вход...' : 'Войти'}
           </button>
         </form>
