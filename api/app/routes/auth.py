@@ -23,6 +23,7 @@ async def register(body: RegisterRequest):
         email=body.email,
         password_hash=hash_password(body.password),
     )
+    user = await User.get(email=body.email)
     return TokenResponse(
         access_token=create_access_token(user.id),
         refresh_token=create_refresh_token(user.id),
