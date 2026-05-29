@@ -115,7 +115,7 @@
         <div class="section-label"><i class="fas fa-question-circle"></i> {{ faq_preview.label }}</div>
         <h2 class="section-title">{{ faq_preview.title }}</h2>
         <div class="faq-list">
-            {% for item in faq_preview.items %}
+            {% for item in faq_preview['items'] %}
             <div class="faq-item">
                 <button class="faq-question">{{ item.q }} <i class="fas fa-chevron-down"></i></button>
                 <div class="faq-answer"><p>{{ item.a }}</p></div>

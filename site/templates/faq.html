@@ -27,7 +27,7 @@
         </div>
 
         <div class="faq-list" id="faqList">
-            {% for item in faq.items %}
+            {% for item in faq['items'] %}
             <div class="faq-item" data-cat="{{ item.cat }}">
                 <button class="faq-question">{{ item.q }} <i class="fas fa-chevron-down"></i></button>
                 <div class="faq-answer"><p>{{ item.a }}</p></div>

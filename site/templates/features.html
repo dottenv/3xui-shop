@@ -21,7 +21,7 @@
                 <h3>{{ block.title }}</h3>
                 <p>{{ block.text }}</p>
                 <ul>
-                    {% for item in block.items %}
+                    {% for item in block['items'] %}
                     <li><i class="fas fa-check"></i> {{ item }}</li>
                     {% endfor %}
                 </ul>
