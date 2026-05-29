@@ -195,5 +195,26 @@ async def run_migrations():
     print("[db] Schema up to date.")
 
 
+async def init_db():
+    await Tortoise.init(
+        db_url=settings.DATABASE_URL,
+        modules={"models": ["app.core.models"]},
+    )
+    conn = Tortoise.get_connection("default")
+
+    # Check if any of our tables already exist (fresh DB or existing)
+    existing = await conn.execute_query(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('users','servers','transactions')"
+    )
+    if not existing[1]:
+        print("[db] Fresh database — creating schema...")
+        await conn.execute_script(BASE_SCHEMA)
+    else:
+        print("[db] Database exists — checking schema version...")
+
+    await run_migrations()
+    print("[db] Schema up to date.")
+
+
 async def close_db():
     await Tortoise.close_connections()
