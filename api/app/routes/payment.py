@@ -167,9 +167,11 @@ async def create_payment(body: CreatePaymentRequest,
 
     try:
         sub = await issue_subscription(user, body.plan_id)
-        txn.status = "completed"
-        txn.paid_at = datetime.now(timezone.utc)
-        await txn.save()
+        await Transaction.filter(id=txn.id).update(
+            status="completed",
+            paid_at=datetime.now(timezone.utc),
+        )
+        server = await Server.get_or_none(id=sub.server_id)
 
         return PaymentResponse(
             payment_id=str(payment_id),
@@ -178,21 +180,18 @@ async def create_payment(body: CreatePaymentRequest,
             status="completed",
             sub_id=sub.id,
             sub_uuid=sub.client_uuid,
-            server_name=sub.server.name if sub.server_id else None,
+            server_name=server.name if server else None,
             config_link=f"/config",
         )
     except HTTPException:
-        # Refund on failure
         user.balance = float(user.balance) + price
         await user.save()
-        txn.status = "failed"
-        await txn.save()
+        await Transaction.filter(id=txn.id).update(status="failed")
         raise
     except Exception as e:
         user.balance = float(user.balance) + price
         await user.save()
-        txn.status = "failed"
-        await txn.save()
+        await Transaction.filter(id=txn.id).update(status="failed")
         raise HTTPException(status_code=500, detail=f"Ошибка: {str(e)}")
 
 
