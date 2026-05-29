@@ -153,6 +153,7 @@ async def get_servers():
             "id": s.id,
             "name": s.name,
             "host": s.host,
+            "address": s.address or s.host,
             "port": s.port,
             "location": s.location,
             "country": s.country,
