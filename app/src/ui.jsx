@@ -1,3 +1,6 @@
+import { useState } from 'react'
+
+// --- Spinner ---
 export function Spinner({ className = 'w-4 h-4' }) {
   return (
     <svg className={`animate-spin ${className}`} viewBox="0 0 24 24" fill="none">
@@ -7,6 +10,36 @@ export function Spinner({ className = 'w-4 h-4' }) {
   )
 }
 
+// --- Skeleton ---
+export function Skeleton({ className = '' }) {
+  return <div className={`bg-surface/50 animate-pulse rounded-xl ${className}`} />
+}
+
+export function CardSkeleton() {
+  return (
+    <div className="bg-surface border border-border rounded-2xl p-5 space-y-3">
+      <Skeleton className="h-3 w-20" />
+      <Skeleton className="h-5 w-40" />
+      <Skeleton className="h-3 w-32" />
+    </div>
+  )
+}
+
+// --- Preloader (full screen) ---
+export function Preloader({ text = 'CWIM VPN' }) {
+  return (
+    <div className="fixed inset-0 z-50 bg-bg flex flex-col items-center justify-center gap-4">
+      <svg className="w-12 h-12 text-primary animate-pulse" viewBox="0 0 512 512" fill="currentColor">
+        <path d="M256 64C208 64 160 112 160 160v48H128v192h256V208h-32v-48C352 112 304 64 256 64zm-48 128v-32c0-26 22-48 48-48s48 22 48 48v32H208z" />
+        <circle cx="256" cy="280" r="24" fill="currentColor" />
+        <path d="M256 280v48" stroke="currentColor" strokeWidth="8" strokeLinecap="round" />
+      </svg>
+      <span className="text-muted text-sm font-medium tracking-wider">{text}</span>
+    </div>
+  )
+}
+
+// --- Password input ---
 export function PasswordInput({ value, onChange, placeholder, label, id }) {
   const [show, setShow] = useState(false)
   return (
@@ -27,8 +60,6 @@ export function PasswordInput({ value, onChange, placeholder, label, id }) {
     </div>
   )
 }
-
-import { useState } from 'react'
 
 function EyeIcon() {
   return (

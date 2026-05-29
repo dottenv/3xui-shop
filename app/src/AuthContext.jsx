@@ -1,7 +1,9 @@
 import { createContext, useContext, useState, useEffect } from 'react'
-import { apiJson, getTokens, setTokens, clearTokens } from './api'
+import { apiJson, apiCached, getTokens, setTokens, clearTokens, cacheClear } from './api'
 
 const AuthContext = createContext(null)
+
+const CACHE_TTL = 300_000 // 5 min
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
@@ -10,9 +12,9 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const tokens = getTokens()
     if (tokens.access_token) {
-      apiJson('/auth/me')
+      apiCached('/auth/me', {}, CACHE_TTL)
         .then(setUser)
-        .catch(() => { clearTokens(); setUser(null) })
+        .catch(() => { clearTokens(); cacheClear(); setUser(null) })
         .finally(() => setLoading(false))
     } else {
       setLoading(false)
@@ -40,7 +42,7 @@ export function AuthProvider({ children }) {
   }
 
   function logout() {
-    clearTokens()
+    clearTokens(); cacheClear()
     setUser(null)
   }
 
