@@ -236,18 +236,14 @@ async def run_migrations():
             if col not in col_names:
                 await conn.execute_query(f'ALTER TABLE "servers" ADD COLUMN "{col}" {col_type}')
                 added = True
-        if not added:
-            await conn.execute_query(
-                f'INSERT INTO "{SCHEMA_MIGRATIONS_TABLE}" ("name") VALUES (?)',
-                ["006_servers_xui"],
-            )
-            print("[db] Migration 006_servers_xui: columns already present, skipped")
-        else:
-            await conn.execute_query(
-                f'INSERT INTO "{SCHEMA_MIGRATIONS_TABLE}" ("name") VALUES (?)',
-                ["006_servers_xui"],
-            )
+        await conn.execute_query(
+            f'INSERT OR IGNORE INTO "{SCHEMA_MIGRATIONS_TABLE}" ("name") VALUES (?)',
+            ["006_servers_xui"],
+        )
+        if added:
             print("[db] Applied migration: 006_servers_xui")
+        else:
+            print("[db] Migration 006_servers_xui: columns already present, skipped")
 
     # Migration 007 — server SSH + dedicated fields
     if "007_servers_ssh_dedicated" not in applied:
@@ -266,18 +262,14 @@ async def run_migrations():
             if col not in col_names:
                 await conn.execute_query(f'ALTER TABLE "servers" ADD COLUMN "{col}" {col_type}')
                 added = True
-        if not added:
-            await conn.execute_query(
-                f'INSERT INTO "{SCHEMA_MIGRATIONS_TABLE}" ("name") VALUES (?)',
-                ["007_servers_ssh_dedicated"],
-            )
-            print("[db] Migration 007_servers_ssh_dedicated: columns already present, skipped")
-        else:
-            await conn.execute_query(
-                f'INSERT INTO "{SCHEMA_MIGRATIONS_TABLE}" ("name") VALUES (?)',
-                ["007_servers_ssh_dedicated"],
-            )
+        await conn.execute_query(
+            f'INSERT OR IGNORE INTO "{SCHEMA_MIGRATIONS_TABLE}" ("name") VALUES (?)',
+            ["007_servers_ssh_dedicated"],
+        )
+        if added:
             print("[db] Applied migration: 007_servers_ssh_dedicated")
+        else:
+            print("[db] Migration 007_servers_ssh_dedicated: columns already present, skipped")
 
     print("[db] Schema up to date.")
 
