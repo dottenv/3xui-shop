@@ -32,47 +32,53 @@ async def get_balance(user: User = Depends(get_current_user)):
 
 @router.get("/subscription")
 async def get_subscription(user: User = Depends(get_current_user)):
-    sub = await Subscription.filter(user_id=user.id, is_active=True).order_by("-expires_at").first()
-    if not sub:
+    subs = await Subscription.filter(user_id=user.id, is_active=True).order_by("-expires_at").all()
+    if not subs:
         return {"is_active": False}
 
-    server = await Server.get_or_none(id=sub.server_id)
     now = datetime.now(timezone.utc)
-    expires = sub.expires_at
+    latest = subs[0]
+    expires = latest.expires_at
     if expires.tzinfo is None:
         from datetime import timezone as tz
         expires = expires.replace(tzinfo=tz.utc)
     days_left = max(0, (expires - now).days)
 
-    # Auto-expire if past due
     if days_left == 0 and expires < now:
-        sub.is_active = False
-        await sub.save()
+        for s in subs:
+            s.is_active = False
+            await s.save()
         return {"is_active": False}
 
-    if sub.traffic_limit > 0:
-        used = sub.traffic_up + sub.traffic_down
-        usage_pct = min(100, round(used / sub.traffic_limit * 100))
-    else:
-        usage_pct = 0
+    total_up = sum(s.traffic_up for s in subs)
+    total_down = sum(s.traffic_down for s in subs)
+    total_limit = sum(s.traffic_limit for s in subs)
+    usage_pct = min(100, round((total_up + total_down) / max(total_limit, 1) * 100)) if total_limit > 0 else 0
+
+    servers_info = []
+    for s in subs:
+        srv = await Server.get_or_none(id=s.server_id)
+        servers_info.append({
+            "server_id": s.server_id,
+            "server_name": srv.name if srv else f"#{s.server_id}",
+            "server_online": srv.is_online if srv else False,
+            "server_flag": srv.flag or "" if srv else "",
+        })
 
     return {
         "is_active": True,
-        "plan_id": sub.plan_id,
-        "server_id": sub.server_id,
-        "server_name": server.name if server else f"#{sub.server_id}",
-        "server_online": server.is_online if server else False,
-        "client_uuid": sub.client_uuid,
-        "devices": sub.devices,
-        "duration_days": sub.duration_days,
-        "traffic_up": sub.traffic_up,
-        "traffic_down": sub.traffic_down,
-        "traffic_limit": sub.traffic_limit,
+        "plan_id": latest.plan_id,
+        "devices": latest.devices,
+        "duration_days": latest.duration_days,
+        "traffic_up": total_up,
+        "traffic_down": total_down,
+        "traffic_limit": total_limit,
         "usage_pct": usage_pct,
-        "starts_at": sub.starts_at.isoformat() if sub.starts_at else None,
-        "expires_at": sub.expires_at.isoformat() if sub.expires_at else None,
+        "starts_at": latest.starts_at.isoformat() if latest.starts_at else None,
+        "expires_at": latest.expires_at.isoformat() if latest.expires_at else None,
         "days_left": days_left,
-        "auto_renew": sub.auto_renew,
+        "servers": servers_info,
+        "server_count": len(servers_info),
     }
 
 
@@ -94,45 +100,48 @@ async def get_subscriptions(user: User = Depends(get_current_user)):
 
 @router.get("/subscription/config")
 async def get_subscription_config(user: User = Depends(get_current_user)):
-    sub = await Subscription.filter(user_id=user.id, is_active=True).order_by("-expires_at").first()
-    if not sub:
+    subs = await Subscription.filter(user_id=user.id, is_active=True).order_by("-expires_at").all()
+    if not subs:
         raise HTTPException(status_code=404, detail="Нет активной подписки")
 
-    server = await Server.get_or_none(id=sub.server_id)
-    if not server:
-        raise HTTPException(status_code=404, detail="Сервер не найден")
+    all_servers = []
+    for sub in subs:
+        server = await Server.get_or_none(id=sub.server_id)
+        if not server or not sub.client_uuid:
+            continue
 
-    host = server.host
-    port = server.sub_port or server.port or 443
-    uuid = sub.client_uuid
-    label = f"Cwim VPN — {server.flag or ''} {server.name}".strip()
-    name = quote(label)
+        host = server.host
+        port = server.sub_port or server.port or 443
+        uuid = sub.client_uuid
+        label = f"Cwim VPN — {server.flag or ''} {server.name}".strip()
+        name = quote(label)
+        base = f"pbk={server.config_public_key}&fp=chrome&sni={server.config_sni}"
+        sid = server.config_short_id
+        flow = server.config_flow
 
-    links = []
-    base_params = f"pbk={server.config_public_key}&fp=chrome&sni={server.config_sni}"
+        links = []
+        p1 = f"type=tcp&security=reality&flow={flow}&{base}&sid={sid}"
+        links.append({"protocol": "VLESS+Reality TCP", "link": f"vless://{uuid}@{host}:{port}?{p1}#{name}"})
+        p2 = f"type=xhttp&security=reality&flow={flow}&{base}&sid={sid}"
+        links.append({"protocol": "VLESS+Reality XHTTP", "link": f"vless://{uuid}@{host}:{port}?{p2}#{name}"})
 
-    # VLESS + Reality (TCP)
-    p1 = f"type=tcp&security=reality&flow={server.config_flow}&{base_params}&sid={server.config_short_id}"
-    links.append({"protocol": "VLESS+Reality TCP", "link": f"vless://{uuid}@{host}:{port}?{p1}#{name}"})
+        all_servers.append({
+            "server_name": server.name,
+            "server_flag": server.flag or "",
+            "host": host,
+            "port": port,
+            "protocol": server.protocol,
+            "client_uuid": uuid,
+            "is_online": server.is_online,
+            "links": links,
+        })
 
-    # VLESS + Reality (XHTTP)
-    p2 = f"type=xhttp&security=reality&flow={server.config_flow}&{base_params}&sid={server.config_short_id}"
-    links.append({"protocol": "VLESS+Reality XHTTP", "link": f"vless://{uuid}@{host}:{port}?{p2}#{name}"})
-
-    # XUI subscription link (auto-config for clients)
-    sub_link = f"vless://{uuid}@{host}:{port}?{p1}&sub=true#sub_{name}"
-    links.append({"protocol": "Subscription", "link": sub_link})
+    if not all_servers:
+        raise HTTPException(status_code=404, detail="Нет доступных конфигураций")
 
     return {
-        "server_name": server.name,
-        "server_flag": server.flag or "",
-        "host": host,
-        "port": port,
-        "protocol": server.protocol,
-        "client_uuid": uuid,
-        "expires_at": sub.expires_at.isoformat() if sub.expires_at else None,
-        "is_online": server.is_online,
-        "links": links,
+        "expires_at": subs[0].expires_at.isoformat() if subs[0].expires_at else None,
+        "servers": all_servers,
     }
 
 

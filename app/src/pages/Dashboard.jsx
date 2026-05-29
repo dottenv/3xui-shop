@@ -52,8 +52,10 @@ export default function Dashboard() {
                 <div>
                   <p className="text-lg font-bold">{planLabels[sub.plan_id] || sub.plan_id}</p>
                   <div className="flex items-center gap-2 text-xs text-muted mt-0.5">
-                    <span>{sub.server_name || `#${sub.server_id}`}</span>
-                    <span className={`w-1.5 h-1.5 rounded-full ${sub.server_online ? 'bg-green-400' : 'bg-red-400'}`} />
+                    <span>{sub.server_count || 0} сервер(ов)</span>
+                    {sub.servers?.slice(0, 3).map((s, i) => (
+                      <span key={i} className={`w-1.5 h-1.5 rounded-full ${s.server_online ? 'bg-green-400' : 'bg-red-400'}`} title={s.server_name} />
+                    ))}
                   </div>
                 </div>
                 <div className="text-right">

@@ -34,8 +34,8 @@ export default function Config() {
   }
 
   function downloadAll() {
-    if (!config?.links?.length) return
-    const text = config.links.map(l => l.link).join('\n')
+    if (!config?.servers?.length) return
+    const text = config.servers.flatMap(s => s.links).map(l => l.link).join('\n')
     const blob = new Blob([text], { type: 'text/plain' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -59,7 +59,7 @@ export default function Config() {
     )
   }
 
-  if (error || !config?.links?.length) {
+  if (error || !config?.servers?.length) {
     return (
       <div className="space-y-6">
         <BackButton />
@@ -78,38 +78,53 @@ export default function Config() {
   return (
     <div className="space-y-6">
       <BackButton />
-      <div>
-        <h1 className="text-xl font-bold">{t('app.pages.config.title')}</h1>
-        <p className="text-muted text-sm mt-1">{config.server_flag} {config.server_name} · {config.host}:{config.port} · до {new Date(config.expires_at).toLocaleDateString('ru-RU')}</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold">{t('app.pages.config.title')}</h1>
+          <p className="text-muted text-sm mt-1">{config.servers.length} сервер(ов) · до {new Date(config.expires_at).toLocaleDateString('ru-RU')}</p>
+        </div>
       </div>
 
-      {config.links.map((item, i) => (
-        <div key={i} className="bg-surface border border-border rounded-2xl overflow-hidden">
-          <div className="px-5 pt-5 pb-3 flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-muted">{item.protocol.toUpperCase()} {t('app.pages.config.config')}</span>
-            <span className="text-[10px] text-muted bg-bg px-2 py-1 rounded-full">{item.protocol}</span>
+      <div className="text-xs text-muted bg-bg border border-border rounded-xl px-4 py-3 break-all select-all font-mono">
+        {config.servers.flatMap(s => s.links).map(l => l.link).join('\n')}
+      </div>
+
+      {config.servers.map((server, si) => (
+        <div key={si}>
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-lg">{server.server_flag}</span>
+            <span className="font-semibold text-sm">{server.server_name}</span>
+            <span className={`w-1.5 h-1.5 rounded-full ${server.is_online ? 'bg-green-400' : 'bg-red-400'}`} />
           </div>
-          <div className="px-5 pb-5">
-            <div className="bg-bg border border-border rounded-xl p-4 text-xs font-mono text-muted break-all select-all leading-relaxed">
-              {item.link}
-            </div>
-          </div>
-          <div className="px-5 pb-5 flex gap-2">
-            <button
-              onClick={() => copyLink(item.link)}
-              className="flex-1 bg-primary text-white rounded-xl py-3 text-sm font-medium hover:bg-primary-dark transition-colors"
-            >
-              {copied === item.link.slice(0, 20) ? t('app.pages.config.copied') : t('app.pages.config.copy')}
-            </button>
+          <div className="space-y-3">
+            {server.links.map((item, i) => (
+              <div key={i} className="bg-surface border border-border rounded-2xl overflow-hidden">
+                <div className="px-5 pt-5 pb-3 flex items-center justify-between">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-muted">{item.protocol}</span>
+                  <span className="text-[10px] text-muted bg-bg px-2 py-1 rounded-full">{item.protocol.split(' ')[0]}</span>
+                </div>
+                <div className="px-5 pb-5">
+                  <div className="bg-bg border border-border rounded-xl p-4 text-xs font-mono text-muted break-all select-all leading-relaxed">
+                    {item.link}
+                  </div>
+                </div>
+                <div className="px-5 pb-5 flex gap-2">
+                  <button
+                    onClick={() => copyLink(item.link)}
+                    className="flex-1 bg-primary text-white rounded-xl py-3 text-sm font-medium hover:bg-primary-dark transition-colors"
+                  >
+                    {copied === item.link.slice(0, 20) ? t('app.pages.config.copied') : t('app.pages.config.copy')}
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       ))}
 
-      {config.links.length > 1 && (
-        <button onClick={downloadAll} className="w-full bg-surface border border-border rounded-xl py-3 text-sm font-medium text-muted hover:border-primary transition-colors">
-          {t('app.pages.config.download_all')}
-        </button>
-      )}
+      <button onClick={downloadAll} className="w-full bg-surface border border-border rounded-xl py-3 text-sm font-medium text-muted hover:border-primary transition-colors">
+        {t('app.pages.config.download_all')}
+      </button>
 
       <div className="bg-surface border border-border rounded-2xl p-5 space-y-3">
         <h3 className="font-semibold text-sm">{t('app.pages.config.how_title')}</h3>

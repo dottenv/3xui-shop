@@ -42,33 +42,7 @@ PLANS = {
 }
 
 
-async def issue_subscription(user: User, plan_id: str) -> Subscription:
-    plan = PLANS.get(plan_id)
-    if not plan:
-        plan = {"devices": 1, "duration_days": 30}
-
-    active = await Server.filter(is_active=True).all()
-    if not active:
-        raise HTTPException(status_code=503, detail="Нет доступных серверов")
-    server = random.choice(active)
-
-    # Check multiple subs rule: only dedicated servers allow multiple subscriptions
-    if not server.is_dedicated:
-        existing_active = await Subscription.filter(user_id=user.id, is_active=True).first()
-        if existing_active:
-            raise HTTPException(
-                status_code=400,
-                detail="У вас уже есть активная подписка. Отзовите её в поддержке перед покупкой новой, или выберите выделенный сервер.",
-            )
-
-    now = datetime.now(timezone.utc)
-    duration = plan["duration_days"]
-    expires_at = now + timedelta(days=duration)
-    safe_name = server.name.replace(" ", "_").replace("/", "_")[:20]
-    email_tag = f"cwim_{safe_name}_{user.id}"
-    traffic_limit_gb = 50
-
-    # Create XUI client (delete existing client with same email first if any)
+async def create_xui_client(server: Server, email_tag: str, traffic_limit_gb: int, duration: int) -> str:
     xui = XuiService(
         base_url=build_base_url(server.host, server.port, server.xui_url),
         username=server.xui_username,
@@ -79,7 +53,7 @@ async def issue_subscription(user: User, plan_id: str) -> Subscription:
         existing = await xui.get_client_by_email(email_tag)
         if existing:
             await xui._client.delete_client(email=email_tag)
-        resp = await xui.add_client(
+        await xui.add_client(
             inbound_id=server.inbound_id,
             email=email_tag,
             client_uuid="",
@@ -87,34 +61,67 @@ async def issue_subscription(user: User, plan_id: str) -> Subscription:
             expire_days=duration,
         )
         real_client = await xui.get_client_by_email(email_tag)
-        xui_uuid = (real_client or {}).get("uuid", "")
-    except HTTPException:
-        raise
+        return (real_client or {}).get("uuid", "")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Ошибка 3X-UI: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"3X-UI {server.name}: {str(e)}")
     finally:
         await xui.close()
 
-    if not xui_uuid:
-        raise HTTPException(status_code=500, detail="3X-UI не вернул UUID клиента")
 
-    sub = await Subscription.create(
-        user_id=user.id,
-        plan_id=plan_id,
-        server_id=server.id,
-        client_uuid=xui_uuid,
-        devices=plan["devices"],
-        duration_days=duration,
-        traffic_limit=traffic_limit_gb * 1024 * 1024 * 1024,
-        starts_at=now,
-        expires_at=expires_at,
-    )
+async def issue_subscription(user: User, plan_id: str) -> list[Subscription]:
+    plan = PLANS.get(plan_id)
+    if not plan:
+        plan = {"devices": 1, "duration_days": 30}
 
-    # Update server client count
-    server.current_clients += 1
-    await server.save()
+    servers = await Server.filter(is_active=True).all()
+    if not servers:
+        raise HTTPException(status_code=503, detail="Нет доступных серверов")
 
-    return sub
+    # Check existing shared subscription
+    existing_shared = await Subscription.filter(
+        user_id=user.id, is_active=True
+    ).all()
+    for ex in existing_shared:
+        srv = await Server.get_or_none(id=ex.server_id)
+        if srv and not srv.is_dedicated:
+            raise HTTPException(
+                status_code=400,
+                detail="У вас уже есть активная подписка на общий сервер. Отзовите её в поддержке.",
+            )
+
+    now = datetime.now(timezone.utc)
+    duration = plan["duration_days"]
+    expires_at = now + timedelta(days=duration)
+    traffic_limit_gb = 50
+    created = []
+
+    for server in servers:
+        safe_name = server.name.replace(" ", "_").replace("/", "_")[:20]
+        email_tag = f"cwim_{safe_name}_{user.id}"
+
+        xui_uuid = await create_xui_client(server, email_tag, traffic_limit_gb, duration)
+        if not xui_uuid:
+            continue
+
+        sub = await Subscription.create(
+            user_id=user.id,
+            plan_id=plan_id,
+            server_id=server.id,
+            client_uuid=xui_uuid,
+            devices=plan["devices"],
+            duration_days=duration,
+            traffic_limit=traffic_limit_gb * 1024 * 1024 * 1024,
+            starts_at=now,
+            expires_at=expires_at,
+        )
+        server.current_clients += 1
+        await server.save()
+        created.append(sub)
+
+    if not created:
+        raise HTTPException(status_code=500, detail="Не удалось создать подписку ни на одном сервере")
+
+    return created
 
 
 @router.get("/plans")
@@ -169,20 +176,21 @@ async def create_payment(body: CreatePaymentRequest,
     )
 
     try:
-        sub = await issue_subscription(user, body.plan_id)
+        subs = await issue_subscription(user, body.plan_id)
         await Transaction.filter(id=txn.id).update(
             status="completed",
             paid_at=datetime.now(timezone.utc),
         )
-        server = await Server.get_or_none(id=sub.server_id)
+        first = subs[0] if subs else None
+        server = await Server.get_or_none(id=first.server_id) if first else None
 
         return PaymentResponse(
             payment_id=str(payment_id),
             amount=price,
             currency="RUB",
             status="completed",
-            sub_id=sub.id,
-            sub_uuid=sub.client_uuid,
+            sub_id=first.id if first else None,
+            sub_uuid=first.client_uuid if first else None,
             server_name=server.name if server else None,
             config_link=f"/config",
         )
