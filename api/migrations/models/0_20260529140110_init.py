@@ -6,7 +6,7 @@ RUN_IN_TRANSACTION = True
 async def upgrade(db: BaseDBAsyncClient) -> str:
     return """
         CREATE TABLE IF NOT EXISTS "promocodes" (
-    "id" INT NOT NULL  PRIMARY KEY,
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "code" VARCHAR(50) NOT NULL UNIQUE,
     "duration_days" INT NOT NULL  DEFAULT 30,
     "max_uses" INT NOT NULL  DEFAULT 1,
@@ -16,7 +16,7 @@ async def upgrade(db: BaseDBAsyncClient) -> str:
     "created_at" TIMESTAMP NOT NULL
 );
 CREATE TABLE IF NOT EXISTS "referrals" (
-    "id" INT NOT NULL  PRIMARY KEY,
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "referrer_id" INT NOT NULL,
     "referred_id" INT NOT NULL UNIQUE,
     "reward_paid" INT NOT NULL  DEFAULT 0,
@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS "referrals" (
 CREATE INDEX IF NOT EXISTS "idx_referrals_referre_b5410a" ON "referrals" ("referrer_id");
 CREATE INDEX IF NOT EXISTS "idx_referrals_referre_5fede9" ON "referrals" ("referred_id");
 CREATE TABLE IF NOT EXISTS "referrer_rewards" (
-    "id" INT NOT NULL  PRIMARY KEY,
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "user_id" INT NOT NULL,
     "referral_id" INT NOT NULL,
     "reward_type" VARCHAR(20) NOT NULL,
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS "referrer_rewards" (
 );
 CREATE INDEX IF NOT EXISTS "idx_referrer_re_user_id_6008fb" ON "referrer_rewards" ("user_id");
 CREATE TABLE IF NOT EXISTS "servers" (
-    "id" INT NOT NULL  PRIMARY KEY,
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "name" VARCHAR(100) NOT NULL,
     "host" VARCHAR(255) NOT NULL,
     "port" INT NOT NULL  DEFAULT 443,
@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS "servers" (
     "updated_at" TIMESTAMP NOT NULL  DEFAULT CURRENT_TIMESTAMP
 );
 CREATE TABLE IF NOT EXISTS "transactions" (
-    "id" INT NOT NULL  PRIMARY KEY,
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "uuid" CHAR(36) NOT NULL UNIQUE,
     "user_id" INT NOT NULL,
     "payment_gateway" VARCHAR(50) NOT NULL,
@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS "transactions" (
 );
 CREATE INDEX IF NOT EXISTS "idx_transaction_user_id_63ed92" ON "transactions" ("user_id");
 CREATE TABLE IF NOT EXISTS "users" (
-    "id" INT NOT NULL  PRIMARY KEY,
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "uuid" CHAR(36) NOT NULL UNIQUE,
     "email" VARCHAR(255)  UNIQUE,
     "phone" VARCHAR(20)  UNIQUE,
@@ -98,6 +98,7 @@ CREATE TABLE IF NOT EXISTS "aerich" (
 
 async def downgrade(db: BaseDBAsyncClient) -> str:
     return """
+
         """
 
 
@@ -116,7 +117,7 @@ MODELS_STATE = (
     "3t2Byb8hsLhYLaGgOZR25gIGstFvOXaYBtMYLGiGB4EnAbk6dfzcMdXREST6OQOImRJ8D+"
     "9gSoY5VaSI8s8y03eT2vaAEYzOTYCDZFP6Nc4R5OIaXArcojkraVaQSNvHQW0b4sIhw7SC"
     "0lBguobUUre8lliTunFncx6pCmYZY6uXH5oIq6lcFeAdlguKe6ne0k3tNhgg4TthgmQHov"
-    "19/yYCHxWCNkgNQKl7OOHNoXOQRMNWrIIA46YgBunYghQTWnDe0beXIXk/etoHsXYJuRvx"
+    "19/y4CHxWCNkgNQKl7OOHNoXOQRMNWrIIA46YgBunYghQTWnDe0beXIXk/etoHsXYJuRvx"
     "tgLyeA99YRwHslARx4JAinx5pTLQUc6ixDzLJdgDyoGpjmgTou1XHp245Lc6MbTvw6o5tD"
     "apX5cBOML5A+ytC9lFhELSsTCiZ9dB7RvjxC/q8Qz8X+7Qzkup11IrlupxTKzQnjKjTF/u"
     "2kqXd6uk7Ae3papMknVCXejd2bi3YHg/6u12LKFgsmliJjWUhzrPU6P5/tD20usWV9kMp6"
@@ -131,7 +132,7 @@ MODELS_STATE = (
     "J9rlM1hUZ1AzMF1ce7jFtQ+surRW2lcqrUI70hLrvipcWmLdisQKPYCUfgROABuJ05t9uV"
     "r9Wts5wWopTQxoI0s1cz/A2BOhjjUHbK4mOxeArcwAa8+tRx8rCs4popVM9c/WUf7OijyF"
     "z72o/RyUw9Q6LXdA1oYVrCmijFuqz57kUYdVxu2CGoTlQIfFly4W3UqxKHA8hGtQGsO0Gr"
-    "hEbFXVp0vAwwnqkld4TRZ1XvwVog704NXq81uTuLT6/DbV5z2RLoeQInteJV5GLSvlS5D6"
+    "hEbFXVp0vAwwnqkld4TRZ1XvwVog704NXq81uTuLT6/DbV5z2RLocQInteJV5GLSvlS5D6"
     "vB39Mhqwtyxfipc5KD5hm4G0s0CvfrmZ76sQFbm3k6RXPIaMOawqyvv9y91o2WPICaR4IC"
     "GbG/8aLgpfsrB/pL0s50jcb+7UGcWs3Q7/Kpwwo8tPd7K4LXuciC+4MF92e0C8/Ae5I/o2"
 )
