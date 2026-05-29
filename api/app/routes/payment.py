@@ -42,8 +42,6 @@ async def issue_subscription(txn: Transaction, user: User, plan_id: str) -> Opti
     if not active:
         return None
     server = random.choice(active)
-    if not server:
-        return None
 
     now = datetime.now(timezone.utc)
     duration = plan["duration_days"]
@@ -51,6 +49,7 @@ async def issue_subscription(txn: Transaction, user: User, plan_id: str) -> Opti
     email_tag = f"u{user.id}_{server.id}"
     traffic_limit_gb = 50
 
+    # 1. Create XUI client
     xui = XuiService(
         base_url=build_base_url(server.host, server.port, server.xui_url),
         username=server.xui_username,
@@ -68,10 +67,14 @@ async def issue_subscription(txn: Transaction, user: User, plan_id: str) -> Opti
         real_client = await xui.get_client_by_email(email_tag)
         xui_uuid = (real_client or {}).get("uuid", "")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"XUI error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"XUI error creating client: {str(e)}")
     finally:
         await xui.close()
 
+    if not xui_uuid:
+        raise HTTPException(status_code=500, detail="XUI created client but returned no UUID")
+
+    # 2. Create subscription record in DB
     sub = await Subscription.create(
         user_id=user.id,
         plan_id=plan_id,
@@ -102,7 +105,6 @@ async def create_payment(body: CreatePaymentRequest,
     payment_id = uuid.uuid4()
     now = datetime.now(timezone.utc)
 
-    status = "completed" if body.payment_gateway == "mock" else "pending"
     txn = await Transaction.create(
         uuid=payment_id,
         user_id=user.id,
@@ -111,16 +113,22 @@ async def create_payment(body: CreatePaymentRequest,
         currency="RUB",
         devices=plan["devices"],
         duration_days=plan["duration_days"],
-        status=status,
-        paid_at=now if status == "completed" else None,
+        status="processing",
     )
 
     if body.payment_gateway == "mock":
         try:
             await issue_subscription(txn, user, body.plan_id)
+            txn.status = "completed"
+            txn.paid_at = datetime.now(timezone.utc)
+            await txn.save()
         except HTTPException:
+            txn.status = "failed"
+            await txn.save()
             raise
         except Exception as e:
+            txn.status = "failed"
+            await txn.save()
             raise HTTPException(status_code=500, detail=f"Failed to issue subscription: {str(e)}")
 
     return PaymentResponse(

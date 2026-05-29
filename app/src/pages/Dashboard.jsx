@@ -24,11 +24,12 @@ export default function Dashboard() {
   const [servers, setServers] = useState([])
   const [history, setHistory] = useState([])
 
-  useEffect(() => {
-    apiCached('/user/subscription').then(setSub).catch(() => {}).finally(() => setSubLoading(false))
-    apiCached('/user/servers').then(setServers).catch(() => {})
-    apiCached('/payment/history').then(setHistory).catch(() => {})
-  }, [])
+  async function load() {
+    try { setSub(await apiJson('/user/subscription')) } catch {} finally { setSubLoading(false) }
+    apiJson('/user/servers').then(setServers).catch(() => {})
+    apiJson('/payment/history').then(setHistory).catch(() => {})
+  }
+  useEffect(() => { load() }, [])
 
   const isPremium = sub?.is_active
   const d = (s) => t('app.pages.dashboard.' + s)
@@ -65,7 +66,7 @@ export default function Dashboard() {
                 <span>{(sub.traffic_limit / 1024 / 1024 / 1024).toFixed(0) + ' GB'}</span>
               </div>
               <p className="text-xs text-muted">Истекает: {new Date(sub.expires_at).toLocaleDateString('ru-RU')}</p>
-              <Link to="/servers" className="block w-full bg-primary text-white rounded-xl py-3 text-sm font-medium text-center hover:bg-primary-dark transition-colors shadow-lg shadow-primary/20">
+              <Link to="/config" className="block w-full bg-primary text-white rounded-xl py-3 text-sm font-medium text-center hover:bg-primary-dark transition-colors shadow-lg shadow-primary/20">
                 Подключиться
               </Link>
             </div>

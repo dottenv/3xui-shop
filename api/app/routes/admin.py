@@ -411,7 +411,8 @@ async def revoke_subscription(sub_id: int, admin: Admin = Depends(get_current_ad
     sub = await Subscription.get_or_none(id=sub_id)
     if not sub:
         raise HTTPException(status_code=404, detail="Subscription not found")
-    if sub.client_uuid:
+
+    if sub.client_uuid and sub.is_active:
         server = await Server.get_or_none(id=sub.server_id)
         if server:
             try:
@@ -421,13 +422,15 @@ async def revoke_subscription(sub_id: int, admin: Admin = Depends(get_current_ad
                     password=server.xui_password,
                     api_token=server.xui_api_token,
                 )
-                await xui.delete_client(server.inbound_id, sub.client_uuid)
+                email = f"u{sub.user_id}_{sub.server_id}"
+                await xui._client.delete_client(email=email)
                 await xui.close()
             except Exception:
-                pass
+                pass  # client may not exist on XUI
+
     sub.is_active = False
     await sub.save()
-    return {"detail": "Subscription revoked"}
+    return {"detail": "Subscription revoked", "sub_id": sub.id, "user_id": sub.user_id}
 
 
 @router.post("/servers/{server_id}/clean-depleted")

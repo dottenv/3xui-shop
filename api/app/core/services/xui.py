@@ -102,39 +102,39 @@ class XuiClient:
                          traffic_limit_gb: int = 0,
                          expire_days: int = 30,
                          tg_id: int = 0,
-                         limit_ip: int = 0) -> bool:
-        now = int(uuid_lib.uuid4().time)
-        expiry = now + expire_days * 86400 if expire_days > 0 else 0
+                         limit_ip: int = 0) -> dict:
+        import time as _time
+        now = int(_time.time())
+        expiry_ms = int((now + expire_days * 86400) * 1000) if expire_days > 0 else 0
         payload = {
             "client": {
                 "email": email,
                 "totalGB": traffic_limit_gb * 1024 * 1024 * 1024,
-                "expiryTime": expiry * 1000,
+                "expiryTime": expiry_ms,
                 "tgId": tg_id,
                 "limitIp": limit_ip,
                 "enable": True,
             },
             "inboundIds": inbound_ids,
         }
-        await self._api_post("/panel/api/clients/add", payload)
-        return True
+        return await self._api_post("/panel/api/clients/add", payload)
 
     async def update_client(self, email: str,
                             traffic_limit_gb: int = 0,
                             expire_days: int = 30,
                             tg_id: int = 0,
-                            enable: bool = True) -> bool:
-        now = int(uuid_lib.uuid4().time)
-        expiry = now + expire_days * 86400 if expire_days > 0 else 0
+                            enable: bool = True) -> dict:
+        import time as _time
+        now = int(_time.time())
+        expiry_ms = int((now + expire_days * 86400) * 1000) if expire_days > 0 else 0
         payload = {
             "email": email,
             "totalGB": traffic_limit_gb * 1024 * 1024 * 1024,
-            "expiryTime": expiry * 1000,
+            "expiryTime": expiry_ms,
             "tgId": tg_id,
             "enable": enable,
         }
-        await self._api_post(f"/panel/api/clients/update/{email}", payload)
-        return True
+        return await self._api_post(f"/panel/api/clients/update/{email}", payload)
 
     async def delete_client(self, email: str, keep_traffic: bool = False) -> bool:
         params = "?keepTraffic=1" if keep_traffic else ""

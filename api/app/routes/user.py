@@ -39,10 +39,17 @@ async def get_subscription(user: User = Depends(get_current_user)):
         expires = expires.replace(tzinfo=tz.utc)
     days_left = max(0, (expires - now).days)
 
-    usage_pct = 0
+    # Auto-expire if past due
+    if days_left == 0 and expires < now:
+        sub.is_active = False
+        await sub.save()
+        return {"is_active": False}
+
     if sub.traffic_limit > 0:
         used = sub.traffic_up + sub.traffic_down
         usage_pct = min(100, round(used / sub.traffic_limit * 100))
+    else:
+        usage_pct = 0
 
     return {
         "is_active": True,
@@ -57,8 +64,8 @@ async def get_subscription(user: User = Depends(get_current_user)):
         "traffic_down": sub.traffic_down,
         "traffic_limit": sub.traffic_limit,
         "usage_pct": usage_pct,
-        "starts_at": sub.starts_at.isoformat(),
-        "expires_at": sub.expires_at.isoformat(),
+        "starts_at": sub.starts_at.isoformat() if sub.starts_at else None,
+        "expires_at": sub.expires_at.isoformat() if sub.expires_at else None,
         "days_left": days_left,
         "auto_renew": sub.auto_renew,
     }

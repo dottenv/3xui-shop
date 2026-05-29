@@ -15,6 +15,7 @@ import SettingsLanguage from './pages/SettingsLanguage'
 import SettingsTheme from './pages/SettingsTheme'
 import Pricing from './pages/Pricing'
 import Servers from './pages/Servers'
+import Config from './pages/Config'
 import History from './pages/History'
 import Support from './pages/Support'
 import Guides from './pages/Guides'
@@ -46,6 +47,7 @@ export default function App() {
           <Route path="/profile" element={<Navigate to="/settings" replace />} />
           <Route path="/pricing" element={P(Pricing)} />
           <Route path="/servers" element={P(Servers)} />
+          <Route path="/config" element={P(Config)} />
           <Route path="/history" element={P(History)} />
           <Route path="/support" element={P(Support)} />
           <Route path="/guides" element={P(Guides)} />

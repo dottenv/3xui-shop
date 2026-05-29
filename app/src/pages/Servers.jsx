@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { apiCached } from '../api'
 import { BackButton } from '../ui'
 import { useConfig } from '../ConfigContext'
+import { Link } from 'react-router-dom'
 
 export default function Servers() {
   const { t } = useConfig()
@@ -43,9 +44,9 @@ export default function Servers() {
               <div className="w-12 bg-bg border border-border rounded-full h-1.5">
                 <div className={`h-1.5 rounded-full ${s.load > 70 ? 'bg-yellow-400' : 'bg-green-400'}`} style={{ width: `${s.load || 0}%` }} />
               </div>
-              <button disabled={!s.is_online} className={`text-xs font-medium px-3 py-1.5 rounded-lg transition-colors ${s.is_online ? 'bg-primary/10 text-primary hover:bg-primary/20' : 'bg-border/30 text-muted cursor-not-allowed'}`}>
+              <Link to={s.is_online ? '/config' : '#'} className={`text-xs font-medium px-3 py-1.5 rounded-lg transition-colors text-center ${s.is_online ? 'bg-primary/10 text-primary hover:bg-primary/20' : 'bg-border/30 text-muted cursor-not-allowed pointer-events-none'}`}>
                 {s.is_online ? t('app.pages.servers.connect') : t('app.pages.servers.offline')}
-              </button>
+              </Link>
             </div>
           </div>
         ))}
