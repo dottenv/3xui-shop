@@ -25,16 +25,18 @@ export function CardSkeleton() {
   )
 }
 
-// --- Preloader (full screen) ---
-export function Preloader({ text = 'CWIM VPN' }) {
+// --- Preloader (full screen) — matches Flask site style ---
+export function Preloader() {
   return (
-    <div className="fixed inset-0 z-50 bg-bg flex flex-col items-center justify-center gap-4">
-      <svg className="w-12 h-12 text-primary animate-pulse" viewBox="0 0 512 512" fill="currentColor">
-        <path d="M256 64C208 64 160 112 160 160v48H128v192h256V208h-32v-48C352 112 304 64 256 64zm-48 128v-32c0-26 22-48 48-48s48 22 48 48v32H208z" />
-        <circle cx="256" cy="280" r="24" fill="currentColor" />
-        <path d="M256 280v48" stroke="currentColor" strokeWidth="8" strokeLinecap="round" />
-      </svg>
-      <span className="text-muted text-sm font-medium tracking-wider">{text}</span>
+    <div className="fixed inset-0 z-50 bg-bg flex items-center justify-center">
+      <div className="relative w-[60px] h-[60px]">
+        <div className="absolute inset-0 rounded-full border-[3px] border-border border-t-primary animate-spin" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full border-[3px] border-primary flex items-center justify-center">
+          <svg className="w-3 h-3 text-primary" viewBox="0 0 100 100" fill="currentColor">
+            <path d="M50 10C35 10 25 25 25 40v10h-5v40h60V50h-5V40C75 25 65 10 50 10zm-5 45a5 5 0 0110 0v10a5 5 0 01-10 0V55zm15-15H40v-8c0-8 4-12 10-12s10 4 10 12v8z" />
+          </svg>
+        </div>
+      </div>
     </div>
   )
 }
