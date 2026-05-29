@@ -4,7 +4,7 @@ from typing import List
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "CWIM API"
-    DATABASE_URL: str = "sqlite:///data/database.db"
+    DATABASE_URL: str = "sqlite:///app/data/database.db"
     REDIS_URL: str = "redis://redis:6379/0"
     API_SECRET_KEY: str = "change-me-in-production"
 
