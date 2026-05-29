@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { apiCached } from '../api'
+import { apiCached, apiJson } from '../api'
 import { CardSkeleton } from '../ui'
 import { Link } from 'react-router-dom'
 import { useConfig } from '../ConfigContext'
@@ -11,20 +11,17 @@ const quickLinks = [
   { to: '/referrals', key: 'referrals', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z' },
 ]
 
-const mockServers = [
-  { name: 'Netherlands', flag: '🇳🇱', ping: 45, load: 62, online: true },
-  { name: 'Germany', flag: '🇩🇪', ping: 52, load: 78, online: true },
-  { name: 'Singapore', flag: '🇸🇬', ping: 120, load: 34, online: true },
-  { name: 'USA East', flag: '🇺🇸', ping: 98, load: 55, online: false },
-]
-
 export default function Dashboard() {
   const { t } = useConfig()
   const [sub, setSub] = useState(null)
   const [subLoading, setSubLoading] = useState(true)
+  const [servers, setServers] = useState([])
+  const [history, setHistory] = useState([])
 
   useEffect(() => {
     apiCached('/user/subscription').then(setSub).catch(() => {}).finally(() => setSubLoading(false))
+    apiCached('/user/servers').then(setServers).catch(() => {})
+    apiCached('/payment/history').then(setHistory).catch(() => {})
   }, [])
 
   const isPremium = sub?.is_active
@@ -41,13 +38,13 @@ export default function Dashboard() {
           </div>
           {isPremium ? (
             <div className="space-y-2">
-              <p className="text-lg font-bold">{sub.plan_name || sub.plan || '—'}</p>
+              <p className="text-lg font-bold">{sub.plan_id || '—'}</p>
               <div className="flex items-center gap-4 text-sm text-muted">
-                <span>{d('servers')} #{sub.server_id || '—'}</span>
-                <span>ID: {sub.vpn_id ? sub.vpn_id.slice(0, 8) + '…' : '—'}</span>
+                <span>{d('servers')} {sub.server_name || `#${sub.server_id}`}</span>
+                <span>ID: {sub.client_uuid ? sub.client_uuid.slice(0, 8) + '\u2026' : '—'}</span>
               </div>
               <div className="w-full bg-bg rounded-full h-2 mt-1">
-                <div className="bg-primary h-2 rounded-full" style={{ width: sub.usage_pct || '65%' }} />
+                <div className="bg-primary h-2 rounded-full" style={{ width: sub.usage_pct || '0%' }} />
               </div>
               <p className="text-xs text-muted">{sub.days_left || '—'} {t('app.common.days_left')}</p>
             </div>
@@ -67,9 +64,9 @@ export default function Dashboard() {
           <p className="text-sm text-muted">{d('balance')}</p>
           <p className="text-2xl font-bold mt-0.5">0 ₽</p>
         </div>
-        <button className="bg-bg border border-border text-sm font-medium px-5 py-2.5 rounded-xl hover:border-primary transition-colors">
+        <Link to="/pricing" className="bg-bg border border-border text-sm font-medium px-5 py-2.5 rounded-xl hover:border-primary transition-colors">
           Пополнить
-        </button>
+        </Link>
       </div>
 
       <div className="bg-surface border border-border rounded-2xl p-5 space-y-3">
@@ -78,21 +75,22 @@ export default function Dashboard() {
           <Link to="/servers" className="text-xs text-primary font-medium">{d('all')} →</Link>
         </div>
         <div className="space-y-2">
-          {mockServers.map((s, i) => (
-            <div key={i} className="flex items-center gap-3 bg-bg rounded-xl px-4 py-3 text-sm">
-              <span className="text-lg">{s.flag}</span>
+          {servers.length === 0 && <p className="text-sm text-muted text-center py-4">{t('app.common.loading')}</p>}
+          {servers.slice(0, 4).map((s) => (
+            <div key={s.id} className="flex items-center gap-3 bg-bg rounded-xl px-4 py-3 text-sm">
+              <span className="text-lg">{s.flag || '🌐'}</span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="font-medium truncate">{s.name}</span>
-                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${s.online ? 'bg-green-400' : 'bg-red-400'}`} />
+                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${s.is_online ? 'bg-green-400' : 'bg-red-400'}`} />
                 </div>
                 <div className="flex items-center gap-3 text-xs text-muted mt-0.5">
-                  <span>{s.ping} ms</span>
-                  <span>{t('app.common.load')} {s.load}%</span>
+                  <span>{s.location || s.country || ''}</span>
+                  <span>{t('app.common.load')} {s.load || 0}%</span>
                 </div>
               </div>
               <div className="w-16 bg-bg border border-border rounded-full h-1.5">
-                <div className={`h-1.5 rounded-full ${s.load > 70 ? 'bg-yellow-400' : s.load > 40 ? 'bg-green-400' : 'bg-green-500'}`} style={{ width: `${s.load}%` }} />
+                <div className={`h-1.5 rounded-full ${s.load > 70 ? 'bg-yellow-400' : s.load > 40 ? 'bg-green-400' : 'bg-green-500'}`} style={{ width: `${s.load || 0}%` }} />
               </div>
             </div>
           ))}
@@ -119,17 +117,14 @@ export default function Dashboard() {
           <Link to="/history" className="text-xs text-primary font-medium">{d('all')} →</Link>
         </div>
         <div className="space-y-0 divide-y divide-border/50">
-          {[
-            { type: 'payment', label: 'Пополнение баланса', detail: '+500 ₽', date: '28 мая', color: 'text-green-400' },
-            { type: 'payment', label: 'Оплата подписки', detail: '-499 ₽', date: '28 мая', color: 'text-red-400' },
-            { type: 'server', label: 'Подключение к серверу', detail: 'Netherlands', date: '27 мая' },
-          ].map((item, i) => (
-            <div key={i} className="flex items-center justify-between py-3 text-sm">
+          {history.length === 0 && <p className="text-sm text-muted text-center py-4">{t('app.common.empty')}</p>}
+          {history.slice(0, 3).map((item) => (
+            <div key={item.id} className="flex items-center justify-between py-3 text-sm">
               <div className="min-w-0 flex-1">
-                <p className="truncate">{item.label}</p>
-                <p className="text-xs text-muted mt-0.5">{item.date}</p>
+                <p className="truncate">{item.status === 'completed' ? t('app.common.payment') : t('app.common.pending')} — {item.amount} ₽</p>
+                <p className="text-xs text-muted mt-0.5">{new Date(item.created_at).toLocaleDateString()}</p>
               </div>
-              <span className={`text-xs font-medium ml-3 ${item.color || 'text-muted'}`}>{item.detail}</span>
+              <span className={`text-xs font-medium ml-3 ${item.status === 'completed' ? 'text-green-400' : 'text-yellow-400'}`}>{item.status === 'completed' ? `+${item.amount} ₽` : '...'}</span>
             </div>
           ))}
         </div>

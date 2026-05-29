@@ -1,6 +1,7 @@
 from app.core.models.user import User
 from app.core.models.server import Server
 from app.core.models.transaction import Transaction
+from app.core.models.subscription import Subscription
 from app.core.models.promocode import Promocode
 from app.core.models.referral import Referral, ReferrerReward
 from app.core.models.admin import Admin
@@ -11,6 +12,7 @@ __all__ = [
     "User",
     "Server",
     "Transaction",
+    "Subscription",
     "Promocode",
     "Referral",
     "ReferrerReward",

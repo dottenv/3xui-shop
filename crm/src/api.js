@@ -47,3 +47,10 @@ function clearTokens() {
 
 export { getTokens, setTokens, clearTokens }
 export default api
+
+export async function apiJson(url, options = {}) {
+  const method = options.method || 'GET'
+  const config = { method, url, data: options.body ? JSON.parse(options.body) : undefined }
+  const res = await api(config)
+  return res.data
+}

@@ -1,6 +1,9 @@
 from fastapi import APIRouter, Depends
+from typing import Optional
+from datetime import datetime, timezone
+
 from app.core.schemas import UserResponse, ProfileUpdate
-from app.core.models import User
+from app.core.models import User, Subscription, Server
 from app.core.deps import get_current_user
 
 router = APIRouter()
@@ -23,8 +26,74 @@ async def update_profile(body: ProfileUpdate, user: User = Depends(get_current_u
 
 @router.get("/subscription")
 async def get_subscription(user: User = Depends(get_current_user)):
+    sub = await Subscription.filter(user_id=user.id, is_active=True).order_by("-expires_at").first()
+    if not sub:
+        return {"is_active": False}
+
+    server = await Server.get_or_none(id=sub.server_id)
+    now = datetime.now(timezone.utc)
+    expires = sub.expires_at
+    if expires.tzinfo is None:
+        from datetime import timezone as tz
+        expires = expires.replace(tzinfo=tz.utc)
+    days_left = max(0, (expires - now).days)
+
+    usage_pct = 0
+    if sub.traffic_limit > 0:
+        used = sub.traffic_up + sub.traffic_down
+        usage_pct = min(100, round(used / sub.traffic_limit * 100))
+
     return {
-        "is_active": bool(user.vpn_id and user.server_id),
-        "server_id": user.server_id,
-        "vpn_id": user.vpn_id,
+        "is_active": True,
+        "plan_id": sub.plan_id,
+        "server_id": sub.server_id,
+        "server_name": server.name if server else f"#{sub.server_id}",
+        "client_uuid": sub.client_uuid,
+        "devices": sub.devices,
+        "duration_days": sub.duration_days,
+        "traffic_up": sub.traffic_up,
+        "traffic_down": sub.traffic_down,
+        "traffic_limit": sub.traffic_limit,
+        "usage_pct": usage_pct,
+        "starts_at": sub.starts_at.isoformat(),
+        "expires_at": sub.expires_at.isoformat(),
+        "days_left": days_left,
+        "auto_renew": sub.auto_renew,
     }
+
+
+@router.get("/subscriptions")
+async def get_subscriptions(user: User = Depends(get_current_user)):
+    subs = await Subscription.filter(user_id=user.id).order_by("-created_at")
+    return [
+        {
+            "id": s.id,
+            "plan_id": s.plan_id,
+            "server_id": s.server_id,
+            "is_active": s.is_active,
+            "expires_at": s.expires_at.isoformat(),
+            "created_at": s.created_at.isoformat(),
+        }
+        for s in subs
+    ]
+
+
+@router.get("/servers")
+async def get_servers():
+    servers = await Server.filter(is_active=True).order_by("id")
+    return [
+        {
+            "id": s.id,
+            "name": s.name,
+            "host": s.host,
+            "port": s.port,
+            "location": s.location,
+            "country": s.country,
+            "flag": s.flag,
+            "is_online": s.is_online,
+            "load": min(100, int(s.current_clients / max(s.max_clients, 1) * 100)),
+            "clients": s.current_clients,
+            "max_clients": s.max_clients,
+        }
+        for s in servers
+    ]

@@ -42,6 +42,9 @@ CREATE TABLE IF NOT EXISTS "servers" (
     "is_online" INT NOT NULL DEFAULT 0,
     "inbound_id" INT NOT NULL DEFAULT 1,
     "protocol" VARCHAR(50) NOT NULL DEFAULT 'vless',
+    "xui_url" VARCHAR(255) NOT NULL DEFAULT '',
+    "xui_username" VARCHAR(100) NOT NULL DEFAULT '',
+    "xui_password" VARCHAR(255) NOT NULL DEFAULT '',
     "created_at" TIMESTAMP NOT NULL,
     "updated_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -112,7 +115,27 @@ CREATE TABLE IF NOT EXISTS "admins" (
 # Add new migrations here as tuples: (name, sql)
 MIGRATIONS: list[tuple[str, str]] = [
     ("001_admins", """
-        CREATE TABLE IF NOT EXISTS "admins" (
+CREATE TABLE IF NOT EXISTS "subscriptions" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "user_id" INT NOT NULL,
+    "plan_id" VARCHAR(50) NOT NULL,
+    "server_id" INT NOT NULL,
+    "client_uuid" VARCHAR(36) NOT NULL UNIQUE,
+    "devices" INT NOT NULL DEFAULT 1,
+    "duration_days" INT NOT NULL DEFAULT 30,
+    "traffic_up" BIGINT NOT NULL DEFAULT 0,
+    "traffic_down" BIGINT NOT NULL DEFAULT 0,
+    "traffic_limit" BIGINT NOT NULL DEFAULT 0,
+    "starts_at" TIMESTAMP NOT NULL,
+    "expires_at" TIMESTAMP NOT NULL,
+    "is_active" INT NOT NULL DEFAULT 1,
+    "auto_renew" INT NOT NULL DEFAULT 0,
+    "created_at" TIMESTAMP NOT NULL,
+    "updated_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS "idx_sub_user" ON "subscriptions" ("user_id");
+
+CREATE TABLE IF NOT EXISTS "admins" (
             "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
             "email" VARCHAR(255) NOT NULL UNIQUE,
             "password_hash" VARCHAR(255) NOT NULL,
@@ -142,6 +165,30 @@ MIGRATIONS: list[tuple[str, str]] = [
             "created_at" TIMESTAMP NOT NULL
         );
         CREATE INDEX IF NOT EXISTS "idx_ip_whitelist_ip" ON "ip_whitelist" ("ip_address");
+    """),
+    ("005_subscriptions", """
+        CREATE TABLE IF NOT EXISTS "subscriptions" (
+            "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+            "user_id" INT NOT NULL,
+            "plan_id" VARCHAR(50) NOT NULL,
+            "server_id" INT NOT NULL,
+            "client_uuid" VARCHAR(36) NOT NULL UNIQUE,
+            "devices" INT NOT NULL DEFAULT 1,
+            "duration_days" INT NOT NULL DEFAULT 30,
+            "traffic_up" BIGINT NOT NULL DEFAULT 0,
+            "traffic_down" BIGINT NOT NULL DEFAULT 0,
+            "traffic_limit" BIGINT NOT NULL DEFAULT 0,
+            "starts_at" TIMESTAMP NOT NULL,
+            "expires_at" TIMESTAMP NOT NULL,
+            "is_active" INT NOT NULL DEFAULT 1,
+            "auto_renew" INT NOT NULL DEFAULT 0,
+            "created_at" TIMESTAMP NOT NULL,
+            "updated_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE INDEX IF NOT EXISTS "idx_sub_user" ON "subscriptions" ("user_id");
+    """),
+    ("006_servers_xui", """
+        -- Add XUI connection columns to servers table if missing
     """),
 ]
 
@@ -191,6 +238,33 @@ async def run_migrations():
             # Still mark applied so we don't check PRAGMA every boot
             await conn.execute_query(f'INSERT INTO "{SCHEMA_MIGRATIONS_TABLE}" ("name") VALUES (?)', ["004_user_tracking"])
             print("[db] Migration 004_user_tracking: columns already present, skipped")
+
+    # Migration 006 — server XUI connection fields
+    if "006_servers_xui" not in applied:
+        col_info = await conn.execute_query("PRAGMA table_info('servers')")
+        col_names = {r["name"] for r in col_info[1]}
+        xui_cols = [
+            ("xui_url", "VARCHAR(255) NOT NULL DEFAULT ''"),
+            ("xui_username", "VARCHAR(100) NOT NULL DEFAULT ''"),
+            ("xui_password", "VARCHAR(255) NOT NULL DEFAULT ''"),
+        ]
+        added = False
+        for col, col_type in xui_cols:
+            if col not in col_names:
+                await conn.execute_query(f'ALTER TABLE "servers" ADD COLUMN "{col}" {col_type}')
+                added = True
+        if not added:
+            await conn.execute_query(
+                f'INSERT INTO "{SCHEMA_MIGRATIONS_TABLE}" ("name") VALUES (?)',
+                ["006_servers_xui"],
+            )
+            print("[db] Migration 006_servers_xui: columns already present, skipped")
+        else:
+            await conn.execute_query(
+                f'INSERT INTO "{SCHEMA_MIGRATIONS_TABLE}" ("name") VALUES (?)',
+                ["006_servers_xui"],
+            )
+            print("[db] Applied migration: 006_servers_xui")
 
     print("[db] Schema up to date.")
 

@@ -9,7 +9,9 @@ from app.core.security import (
     create_admin_access_token, create_admin_refresh_token,
     decode_token,
 )
-from app.core.models import Admin, User, Server, Transaction, IpWhitelist
+from app.core.models import Admin, User, Server, Transaction, Subscription, IpWhitelist
+from app.core.services.xui import XuiService
+from app.core.config import settings
 
 router = APIRouter()
 admin_bearer = HTTPBearer(auto_error=False)
@@ -251,6 +253,8 @@ async def get_servers(admin: Admin = Depends(get_current_admin)):
             "id": s.id,
             "name": s.name,
             "host": s.host,
+            "port": s.port,
+            "sub_port": s.sub_port,
             "location": s.location,
             "country": s.country,
             "flag": s.flag,
@@ -258,9 +262,136 @@ async def get_servers(admin: Admin = Depends(get_current_admin)):
             "current_clients": s.current_clients,
             "is_active": s.is_active,
             "is_online": s.is_online,
+            "inbound_id": s.inbound_id,
+            "protocol": s.protocol,
+            "xui_url": s.xui_url,
+            "xui_username": s.xui_username,
         }
         for s in servers
     ]
+
+
+class ServerCreateRequest(BaseModel):
+    name: str = Field(..., max_length=100)
+    host: str = Field(..., max_length=255)
+    port: int = Field(default=443)
+    sub_port: int = Field(default=2096)
+    location: Optional[str] = None
+    country: Optional[str] = None
+    flag: Optional[str] = None
+    max_clients: int = Field(default=100)
+    inbound_id: int = Field(default=1)
+    protocol: str = Field(default="vless")
+    xui_url: str = Field(default="")
+    xui_username: str = Field(default="")
+    xui_password: str = Field(default="")
+
+
+class ServerUpdateRequest(BaseModel):
+    name: Optional[str] = Field(None, max_length=100)
+    host: Optional[str] = Field(None, max_length=255)
+    port: Optional[int] = None
+    sub_port: Optional[int] = None
+    location: Optional[str] = None
+    country: Optional[str] = None
+    flag: Optional[str] = None
+    max_clients: Optional[int] = None
+    current_clients: Optional[int] = None
+    inbound_id: Optional[int] = None
+    protocol: Optional[str] = None
+    is_active: Optional[bool] = None
+    is_online: Optional[bool] = None
+    xui_url: Optional[str] = None
+    xui_username: Optional[str] = None
+    xui_password: Optional[str] = None
+
+
+@router.post("/servers")
+async def create_server(body: ServerCreateRequest, admin: Admin = Depends(get_current_admin)):
+    server = await Server.create(**body.model_dump())
+    return {"id": server.id, "name": server.name, "host": server.host}
+
+
+@router.put("/servers/{server_id}")
+async def update_server(server_id: int, body: ServerUpdateRequest,
+                        admin: Admin = Depends(get_current_admin)):
+    server = await Server.get_or_none(id=server_id)
+    if not server:
+        raise HTTPException(status_code=404, detail="Server not found")
+    updates = body.model_dump(exclude_none=True)
+    if not updates:
+        raise HTTPException(status_code=400, detail="No fields to update")
+    await Server.filter(id=server_id).update(**updates)
+    return await Server.get(id=server_id)
+
+
+@router.delete("/servers/{server_id}")
+async def delete_server(server_id: int, admin: Admin = Depends(require_root)):
+    server = await Server.get_or_none(id=server_id)
+    if not server:
+        raise HTTPException(status_code=404, detail="Server not found")
+    await server.delete()
+    return {"detail": "Server deleted"}
+
+
+@router.post("/servers/{server_id}/test")
+async def test_server_connection(server_id: int, admin: Admin = Depends(get_current_admin)):
+    server = await Server.get_or_none(id=server_id)
+    if not server:
+        raise HTTPException(status_code=404, detail="Server not found")
+    xui = XuiService(
+        host=server.xui_url or server.host,
+        username=server.xui_username or settings.XUI_USERNAME,
+        password=server.xui_password or settings.XUI_PASSWORD,
+    )
+    try:
+        ok = await xui.test_connection()
+        return {"success": ok, "message": "Connection successful" if ok else "Connection failed"}
+    except Exception as e:
+        return {"success": False, "message": str(e)}
+    finally:
+        await xui.close()
+
+
+@router.get("/subscriptions")
+async def get_subscriptions(admin: Admin = Depends(get_current_admin)):
+    subs = await Subscription.all().order_by("-created_at").limit(100)
+    return [
+        {
+            "id": s.id,
+            "user_id": s.user_id,
+            "plan_id": s.plan_id,
+            "server_id": s.server_id,
+            "client_uuid": s.client_uuid,
+            "is_active": s.is_active,
+            "expires_at": s.expires_at.isoformat(),
+            "created_at": s.created_at.isoformat(),
+        }
+        for s in subs
+    ]
+
+
+@router.post("/subscriptions/{sub_id}/revoke")
+async def revoke_subscription(sub_id: int, admin: Admin = Depends(get_current_admin)):
+    sub = await Subscription.get_or_none(id=sub_id)
+    if not sub:
+        raise HTTPException(status_code=404, detail="Subscription not found")
+    if sub.client_uuid:
+        server = await Server.get_or_none(id=sub.server_id)
+        if server:
+            try:
+                xui = XuiService(
+                    host=server.xui_url or server.host,
+                    username=server.xui_username or settings.XUI_USERNAME,
+                    password=server.xui_password or settings.XUI_PASSWORD,
+                )
+                await xui.delete_client(server.inbound_id, sub.client_uuid)
+                await xui.close()
+            except Exception:
+                pass
+    sub.is_active = False
+    await sub.save()
+    return {"detail": "Subscription revoked"}
 
 
 @router.get("/transactions")

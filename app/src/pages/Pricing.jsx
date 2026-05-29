@@ -1,11 +1,32 @@
-import { Link } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { useConfig } from '../ConfigContext'
-import { BackButton } from '../ui'
+import { apiJson } from '../api'
+import { BackButton, Spinner } from '../ui'
 
 export default function Pricing() {
-  const { t, plans } = useConfig()
+  const { t, plans, lang } = useConfig()
+  const navigate = useNavigate()
+  const [buying, setBuying] = useState(null)
+  const [error, setError] = useState('')
 
   if (!plans) return null
+
+  async function handleBuy(planId) {
+    setBuying(planId)
+    setError('')
+    try {
+      await apiJson('/payment/create', {
+        method: 'POST',
+        body: JSON.stringify({ plan_id: planId, payment_gateway: 'mock' }),
+      })
+      navigate('/')
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setBuying(null)
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -15,9 +36,15 @@ export default function Pricing() {
         <p className="text-muted text-sm mt-1">{t('app.pages.pricing.subtitle')}</p>
       </div>
 
+      {error && (
+        <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm px-4 py-3 rounded-xl">
+          {error}
+        </div>
+      )}
+
       <div className="space-y-4">
-        {plans.plans?.map((p, i) => (
-          <div key={i} className={`relative bg-surface border rounded-2xl p-5 space-y-4 ${p.featured ? 'border-primary shadow-lg shadow-primary/10' : 'border-border'}`}>
+        {plans.plans?.map((p) => (
+          <div key={p.id} className={`relative bg-surface border rounded-2xl p-5 space-y-4 ${p.featured ? 'border-primary shadow-lg shadow-primary/10' : 'border-border'}`}>
             {p.featured && p.badge && (
               <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-primary to-purple-600 text-white text-[10px] font-bold px-4 py-1 rounded-full uppercase tracking-wider">
                 {p.badge}
@@ -42,8 +69,13 @@ export default function Pricing() {
                 </li>
               ))}
             </ul>
-            <button className="w-full bg-primary text-white rounded-xl py-3.5 text-sm font-medium hover:bg-primary-dark transition-colors shadow-lg shadow-primary/20">
-              {t('app.pages.pricing.buy')} — {p.price} {p.currency}
+            <button
+              onClick={() => handleBuy(p.id)}
+              disabled={buying === p.id}
+              className="w-full bg-primary text-white rounded-xl py-3.5 text-sm font-medium hover:bg-primary-dark transition-colors shadow-lg shadow-primary/20 disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {buying === p.id && <Spinner />}
+              {buying === p.id ? t('app.common.processing') : (t('app.pages.pricing.buy') + ' — ' + p.price + ' ' + p.currency)}
             </button>
           </div>
         ))}

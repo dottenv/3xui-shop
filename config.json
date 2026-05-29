@@ -149,9 +149,13 @@
             "pricing": { "title": "Тарифы", "subtitle": "Выберите подходящий план", "buy": "Купить", "questions": "Есть вопросы по тарифам?", "contact_support": "Связаться с поддержкой" },
             "servers": { "title": "Серверы", "available": "доступен", "maintenance": "на обслуживании", "connect": "Подключиться", "offline": "Недоступен" },
             "support": { "title": "Поддержка", "subtitle": "Мы здесь, чтобы помочь", "email": "Написать на почту", "telegram": "Telegram", "faq": "FAQ" },
-            "guides": { "title": "Инструкции", "subtitle": "Как настроить на ваших устройствах" }
+            "guides": { "title": "Инструкции", "subtitle": "Как настроить на ваших устройствах" },
+            "history": { "title": "История", "subtitle": "Все операции и действия", "all": "Всё", "payments": "Платежи" },
+            "profile": { "active_since": "Активен с", "edit": "Редактировать профиль", "first_name": "Имя", "last_name": "Фамилия", "not_set": "Не указано", "logout": "Выйти из аккаунта" },
+            "maintenance": { "title": "Ведутся технические работы", "subtitle": "Приложение временно недоступно. Мы проводим плановое обслуживание. Пожалуйста, зайдите позже.", "status": "Ведутся работы · Функции могут работать некорректно" },
+            "referrals": { "title": "Рефералы", "subtitle": "Приглашайте друзей и получайте бонусы", "link": "Ваша реферальная ссылка", "copy": "Копировать", "invited": "Приглашено", "earned": "Заработано", "earn": "Получите 50 ₽ за каждого приглашённого друга, который купит подписку", "how": "Как это работает", "step1": "Отправьте другу вашу реферальную ссылку", "step2": "Друг регистрируется и покупает любую подписку", "step3": "Вы получаете 50 ₽ на баланс" }
         },
-        "common": { "back": "Назад", "save": "Сохранить", "cancel": "Отмена", "delete": "Удалить", "loading": "Загрузка", "days_left": "дн.", "clients": "клиентов", "load": "Нагрузка" }
+        "common": { "back": "Назад", "save": "Сохранить", "saving": "Сохранение...", "cancel": "Отмена", "delete": "Удалить", "loading": "Загрузка", "days_left": "дн.", "clients": "клиентов", "load": "Нагрузка", "payment": "Платёж", "pending": "В обработке", "empty": "Нет данных", "processing": "Обработка..." }
     },
     "_en": {
         "brand": { "tagline": "Fast & Secure VPN" },
@@ -293,9 +297,13 @@
                 "pricing": { "title": "Pricing", "subtitle": "Choose your plan", "buy": "Buy", "questions": "Have questions?", "contact_support": "Contact Support" },
                 "servers": { "title": "Servers", "available": "available", "maintenance": "on maintenance", "connect": "Connect", "offline": "Offline" },
                 "support": { "title": "Support", "subtitle": "We're here to help", "email": "Email us", "telegram": "Telegram", "faq": "FAQ" },
-                "guides": { "title": "Guides", "subtitle": "How to set up on your devices" }
+                "guides": { "title": "Guides", "subtitle": "How to set up on your devices" },
+                "history": { "title": "History", "subtitle": "All operations and actions", "all": "All", "payments": "Payments" },
+                "profile": { "active_since": "Active since", "edit": "Edit Profile", "first_name": "First Name", "last_name": "Last Name", "not_set": "Not set", "logout": "Log Out" },
+                "maintenance": { "title": "Maintenance in progress", "subtitle": "The app is temporarily unavailable. We are performing scheduled maintenance. Please come back later.", "status": "Works in progress · Some functions may not work correctly" },
+                "referrals": { "title": "Referrals", "subtitle": "Invite friends and get bonuses", "link": "Your referral link", "copy": "Copy", "invited": "Invited", "earned": "Earned", "earn": "Get 50 ₽ for each friend who buys a subscription", "how": "How it works", "step1": "Send your referral link to a friend", "step2": "Friend registers and buys any subscription", "step3": "You get 50 ₽ credited to your balance" }
             },
-            "common": { "back": "Back", "save": "Save", "cancel": "Cancel", "delete": "Delete", "loading": "Loading", "days_left": "days left", "clients": "clients", "load": "Load" }
+            "common": { "back": "Back", "save": "Save", "saving": "Saving...", "cancel": "Cancel", "delete": "Delete", "loading": "Loading", "days_left": "days left", "clients": "clients", "load": "Load", "payment": "Payment", "pending": "Processing", "empty": "No data", "processing": "Processing..." }
         }
     }
 }

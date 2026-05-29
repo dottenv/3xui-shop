@@ -1,18 +1,165 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
+from pydantic import BaseModel, Field
+from typing import Optional
+from datetime import datetime, timezone, timedelta
+import uuid
+
+from app.core.models import User, Transaction, Subscription, Server
+from app.core.deps import get_current_user
+from app.core.services.xui import XuiService, generate_uuid
+from app.core.config import settings
 
 router = APIRouter()
 
 
+class CreatePaymentRequest(BaseModel):
+    plan_id: str = Field(..., max_length=50)
+    payment_gateway: str = Field(default="mock")
+    promo_code: Optional[str] = None
+
+
+class PaymentResponse(BaseModel):
+    payment_id: str
+    amount: float
+    currency: str
+    status: str
+    redirect_url: Optional[str] = None
+
+
+PLANS = {
+    "start": {"price": 250, "devices": 1, "duration_days": 30},
+    "optimal": {"price": 500, "devices": 3, "duration_days": 30},
+    "maximum": {"price": 750, "devices": 5, "duration_days": 30},
+}
+
+
+async def issue_subscription(transaction: Transaction, user: User, plan_id: str):
+    plan = PLANS.get(plan_id)
+    if not plan:
+        plan = {"devices": 1, "duration_days": 30}
+
+    server = await Server.filter(is_active=True).order_by("?").first()
+    if not server:
+        raise HTTPException(status_code=503, detail="No available servers")
+
+    client_uuid = generate_uuid()
+    now = datetime.now(timezone.utc)
+    duration = plan["duration_days"]
+    expires_at = now + timedelta(days=duration)
+
+    email_tag = f"u{user.id}_{server.id}"
+    traffic_limit_gb = 50
+
+    try:
+        xui = XuiService(
+            host=server.xui_url or server.host,
+            username=server.xui_username or settings.XUI_USERNAME,
+            password=server.xui_password or settings.XUI_PASSWORD,
+        )
+        try:
+            await xui.add_client(
+                inbound_id=server.inbound_id,
+                email=email_tag,
+                client_uuid=client_uuid,
+                traffic_limit_gb=traffic_limit_gb,
+                expire_days=duration,
+            )
+        except Exception:
+            pass
+        finally:
+            await xui.close()
+    except Exception:
+        pass
+
+    sub = await Subscription.create(
+        user_id=user.id,
+        plan_id=plan_id,
+        server_id=server.id,
+        client_uuid=client_uuid,
+        devices=plan["devices"],
+        duration_days=duration,
+        traffic_limit=traffic_limit_gb * 1024 * 1024 * 1024,
+        starts_at=now,
+        expires_at=expires_at,
+    )
+    return sub
+
+
 @router.get("/plans")
 async def get_plans():
-    return {"message": "Get plans endpoint"}
+    return PLANS
 
 
-@router.post("/create")
-async def create_payment():
-    return {"message": "Create payment endpoint"}
+@router.post("/create", response_model=PaymentResponse)
+async def create_payment(body: CreatePaymentRequest,
+                         background_tasks: BackgroundTasks,
+                         user: User = Depends(get_current_user)):
+    plan = PLANS.get(body.plan_id)
+    if not plan:
+        raise HTTPException(status_code=400, detail="Invalid plan")
+
+    payment_id = str(uuid.uuid4())
+
+    txn = await Transaction.create(
+        uuid=payment_id,
+        user_id=user.id,
+        payment_gateway=body.payment_gateway,
+        amount=plan["price"],
+        currency="RUB",
+        devices=plan["devices"],
+        duration_days=plan["duration_days"],
+        status="pending",
+    )
+
+    redirect_url = None
+    if body.payment_gateway == "mock":
+        txn.status = "completed"
+        txn.paid_at = datetime.now(timezone.utc)
+        await txn.save()
+
+        try:
+            await issue_subscription(txn, user, body.plan_id)
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to issue subscription: {str(e)}")
+
+    return PaymentResponse(
+        payment_id=payment_id,
+        amount=float(plan["price"]),
+        currency="RUB",
+        status=txn.status,
+        redirect_url=redirect_url,
+    )
 
 
 @router.get("/status/{payment_id}")
-async def check_payment_status(payment_id: str):
-    return {"message": f"Check payment {payment_id}"}
+async def check_payment_status(payment_id: str, user: User = Depends(get_current_user)):
+    txn = await Transaction.get_or_none(uuid=payment_id, user_id=user.id)
+    if not txn:
+        raise HTTPException(status_code=404, detail="Payment not found")
+    return {
+        "payment_id": payment_id,
+        "status": txn.status,
+        "amount": float(txn.amount),
+        "currency": txn.currency,
+        "paid_at": txn.paid_at.isoformat() if txn.paid_at else None,
+    }
+
+
+@router.get("/history")
+async def payment_history(user: User = Depends(get_current_user)):
+    txns = await Transaction.filter(user_id=user.id).order_by("-created_at").limit(50)
+    return [
+        {
+            "id": t.id,
+            "uuid": t.uuid,
+            "amount": float(t.amount),
+            "currency": t.currency,
+            "status": t.status,
+            "payment_gateway": t.payment_gateway,
+            "created_at": t.created_at.isoformat(),
+            "paid_at": t.paid_at.isoformat() if t.paid_at else None,
+        }
+        for t in txns
+    ]

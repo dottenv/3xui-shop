@@ -1,4 +1,5 @@
 import { BackButton } from '../ui'
+import { useConfig } from '../ConfigContext'
 
 const guides = [
   {
@@ -44,12 +45,14 @@ const guides = [
 ]
 
 export default function Guides() {
+  const { t } = useConfig()
+
   return (
     <div className="space-y-6">
       <BackButton />
       <div>
-        <h1 className="text-xl font-bold">Инструкции</h1>
-        <p className="text-muted text-sm mt-1">Настройка VPN на ваших устройствах</p>
+        <h1 className="text-xl font-bold">{t('app.pages.guides.title')}</h1>
+        <p className="text-muted text-sm mt-1">{t('app.pages.guides.subtitle')}</p>
       </div>
 
       {guides.map((g, i) => (
@@ -76,8 +79,8 @@ export default function Guides() {
       ))}
 
       <div className="bg-surface border border-border rounded-2xl p-5 text-center">
-        <p className="text-sm text-muted">Не нашли свою платформу?</p>
-        <a href="https://t.me/cwim_support" className="text-sm text-primary font-medium hover:underline mt-1 inline-block">Написать в поддержку</a>
+        <p className="text-sm text-muted">{t('app.common.empty')}</p>
+        <a href="https://t.me/cwim_support" className="text-sm text-primary font-medium hover:underline mt-1 inline-block">{t('app.pages.support.telegram')}</a>
       </div>
     </div>
   )

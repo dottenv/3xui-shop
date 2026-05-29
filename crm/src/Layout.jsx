@@ -10,6 +10,8 @@ import {
   MenuUnfoldOutlined,
   SettingOutlined,
   LockOutlined,
+  CloudServerOutlined,
+  KeyOutlined,
 } from '@ant-design/icons'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from './AuthContext'
@@ -21,6 +23,8 @@ const menuItems = [
   { key: '/', icon: <DashboardOutlined />, label: 'Дашборд' },
   { key: '/users', icon: <TeamOutlined />, label: 'Пользователи' },
   { key: '/orders', icon: <ShoppingCartOutlined />, label: 'Заказы' },
+  { key: '/servers', icon: <CloudServerOutlined />, label: 'Серверы' },
+  { key: '/subscriptions', icon: <KeyOutlined />, label: 'Подписки' },
   { key: '/whitelist', icon: <LockOutlined />, label: 'IP Whitelist' },
   { key: '/settings', icon: <SettingOutlined />, label: 'Настройки' },
 ]

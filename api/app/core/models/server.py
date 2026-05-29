@@ -23,6 +23,10 @@ class Server(Model):
     inbound_id = fields.IntField(default=1)
     protocol = fields.CharField(max_length=50, default="vless")
 
+    xui_url = fields.CharField(max_length=255, default="")
+    xui_username = fields.CharField(max_length=100, default="")
+    xui_password = fields.CharField(max_length=255, default="")
+
     created_at = fields.DatetimeField(default=datetime.utcnow)
     updated_at = fields.DatetimeField(auto_now=True)
 

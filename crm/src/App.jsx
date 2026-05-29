@@ -8,6 +8,8 @@ import Users from './pages/Users'
 import Orders from './pages/Orders'
 import Settings from './pages/Settings'
 import IpWhitelist from './pages/IpWhitelist'
+import Servers from './pages/Servers'
+import Subscriptions from './pages/Subscriptions'
 
 function Guard({ children }) {
   const { admin, loading, hasAdmins } = useAuth()
@@ -44,6 +46,8 @@ export default function App() {
               <Route path="orders" element={<Orders />} />
               <Route path="settings" element={<Settings />} />
               <Route path="whitelist" element={<IpWhitelist />} />
+              <Route path="servers" element={<Servers />} />
+              <Route path="subscriptions" element={<Subscriptions />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
           </Routes>
