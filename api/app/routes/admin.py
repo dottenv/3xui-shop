@@ -422,7 +422,8 @@ async def revoke_subscription(sub_id: int, admin: Admin = Depends(get_current_ad
                     password=server.xui_password,
                     api_token=server.xui_api_token,
                 )
-                email = f"u{sub.user_id}_{sub.server_id}"
+                safe_name = server.name.replace(" ", "_").replace("/", "_")[:20]
+                email = f"cwim_{safe_name}_{sub.user_id}"
                 await xui._client.delete_client(email=email)
                 await xui.close()
             except Exception:
