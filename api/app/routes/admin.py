@@ -167,9 +167,58 @@ async def create_admin(body: AdminCreateRequest, admin: Admin = Depends(require_
     return {"id": new_admin.id, "email": new_admin.email, "role": new_admin.role}
 
 
+class UserUpdateRequest(BaseModel):
+    first_name: Optional[str] = Field(None, max_length=100)
+    last_name: Optional[str] = Field(None, max_length=100)
+    email: Optional[str] = Field(None, max_length=255)
+    is_active: Optional[bool] = None
+    is_admin: Optional[bool] = None
+
+
 @router.get("/users", response_model=list[UserRow])
 async def get_users(admin: Admin = Depends(get_current_admin)):
     return await User.all().order_by("-created_at")
+
+
+@router.put("/users/{user_id}", response_model=UserRow)
+async def update_user(user_id: int, body: UserUpdateRequest, admin: Admin = Depends(get_current_admin)):
+    user = await User.get_or_none(id=user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    updates = body.model_dump(exclude_none=True)
+    if not updates:
+        raise HTTPException(status_code=400, detail="No fields to update")
+    await User.filter(id=user_id).update(**updates)
+    return await User.get(id=user_id)
+
+
+@router.post("/users/{user_id}/toggle-block")
+async def toggle_user_block(user_id: int, admin: Admin = Depends(get_current_admin)):
+    user = await User.get_or_none(id=user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.is_active = not user.is_active
+    await user.save()
+    return {"id": user.id, "is_active": user.is_active}
+
+
+@router.post("/users/{user_id}/toggle-admin")
+async def toggle_user_admin(user_id: int, admin: Admin = Depends(get_current_admin)):
+    user = await User.get_or_none(id=user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.is_admin = not user.is_admin
+    await user.save()
+    return {"id": user.id, "is_admin": user.is_admin}
+
+
+@router.delete("/users/{user_id}")
+async def delete_user(user_id: int, admin: Admin = Depends(require_root)):
+    user = await User.get_or_none(id=user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    await user.delete()
+    return {"detail": "User deleted"}
 
 
 @router.get("/servers")
