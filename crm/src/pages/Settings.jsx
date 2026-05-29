@@ -282,6 +282,13 @@ function NodesTab() {
     for (const [k, v] of Object.entries(values)) {
       if (v !== undefined && v !== null && v !== '') cleaned[k] = v
     }
+    if (!cleaned.host && cleaned.xui_url) {
+      try {
+        const u = new URL(cleaned.xui_url.startsWith('http') ? cleaned.xui_url : 'https://' + cleaned.xui_url)
+        cleaned.host = u.hostname
+        if (!cleaned.port) cleaned.port = u.port || 443
+      } catch { cleaned.host = cleaned.xui_url.replace(/https?:\/\//, '').split(/[/:]/)[0] }
+    }
     try {
       if (editing) {
         await apiJson(`/admin/servers/${editing.id}`, { method: 'PUT', body: JSON.stringify(cleaned) })
