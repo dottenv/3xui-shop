@@ -110,6 +110,7 @@ async def register_first_admin(body: AdminRegisterRequest):
         password_hash=hash_password(body.password),
         role="root",
     )
+    admin = await Admin.get(email=body.email)  # re-fetch to get autoincremented id
     return AdminTokenResponse(
         access_token=create_admin_access_token(admin.id),
         refresh_token=create_admin_refresh_token(admin.id),
@@ -162,6 +163,7 @@ async def create_admin(body: AdminCreateRequest, admin: Admin = Depends(require_
         role=body.role,
         created_by=admin.id,
     )
+    new_admin = await Admin.get(email=body.email)
     return {"id": new_admin.id, "email": new_admin.email, "role": new_admin.role}
 
 
