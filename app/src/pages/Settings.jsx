@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../AuthContext'
+import { useEffect, useState } from 'react'
+import { apiCached } from '../api'
 
 const sections = [
   {
@@ -30,6 +32,13 @@ const sections = [
 
 export default function Settings() {
   const { user, logout } = useAuth()
+  const [sub, setSub] = useState(null)
+
+  useEffect(() => {
+    apiCached('/user/subscription').then(setSub).catch(() => {})
+  }, [])
+
+  const isPremium = sub?.is_active
 
   return (
     <div className="space-y-6">
@@ -41,6 +50,12 @@ export default function Settings() {
           <p className="font-bold truncate">{user?.first_name || user?.email?.split('@')[0] || 'Пользователь'}</p>
           <p className="text-sm text-muted truncate">{user?.email}</p>
         </div>
+        <span className={`inline-flex items-center gap-1 text-xs font-medium px-3 py-1 rounded-full shrink-0 ${
+          isPremium ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'
+        }`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${isPremium ? 'bg-green-400' : 'bg-yellow-400'}`} />
+          {isPremium ? 'Premium' : 'Free'}
+        </span>
       </div>
 
       <div className="bg-surface border border-border rounded-2xl divide-y divide-border/50 overflow-hidden">

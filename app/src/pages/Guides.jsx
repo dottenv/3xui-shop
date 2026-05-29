@@ -1,3 +1,5 @@
+import { BackButton } from '../ui'
+
 const guides = [
   {
     platform: 'iOS', icon: 'M12 21.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z',
@@ -44,6 +46,7 @@ const guides = [
 export default function Guides() {
   return (
     <div className="space-y-6">
+      <BackButton />
       <div>
         <h1 className="text-xl font-bold">Инструкции</h1>
         <p className="text-muted text-sm mt-1">Настройка VPN на ваших устройствах</p>

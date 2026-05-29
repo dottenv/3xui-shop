@@ -1,9 +1,8 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { BackButton } from '../ui'
 import { isGlass, setGlass } from '../theme'
 
 export default function SettingsTheme() {
-  const navigate = useNavigate()
   const [enabled, setEnabled] = useState(isGlass)
 
   function toggle() {
@@ -14,12 +13,7 @@ export default function SettingsTheme() {
 
   return (
     <div className="space-y-6">
-      <button onClick={() => navigate('/settings')} className="flex items-center gap-2 text-sm text-muted hover:text-white transition-colors">
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-        </svg>
-        Настройки
-      </button>
+      <BackButton />
 
       <h1 className="text-xl font-bold">Тема оформления</h1>
       <p className="text-sm text-muted -mt-4">Тёмная тема — по умолчанию. Liquid Glass придаёт глубину и свечение.</p>

@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+import { BackButton } from '../ui'
 
 const languages = [
   { code: 'ru', label: 'Русский', native: 'Русский', flag: '🇷🇺', available: true },
@@ -9,17 +9,11 @@ const languages = [
 ]
 
 export default function SettingsLanguage() {
-  const navigate = useNavigate()
   const current = 'ru'
 
   return (
     <div className="space-y-6">
-      <button onClick={() => navigate('/settings')} className="flex items-center gap-2 text-sm text-muted hover:text-white transition-colors">
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-        </svg>
-        Настройки
-      </button>
+      <BackButton />
 
       <h1 className="text-xl font-bold">Язык</h1>
       <p className="text-sm text-muted -mt-4">Выберите язык интерфейса</p>

@@ -1,6 +1,9 @@
+import { BackButton } from '../ui'
+
 export default function Referrals() {
   return (
     <div className="space-y-6">
+      <BackButton />
       <div>
         <h1 className="text-xl font-bold">Рефералы</h1>
         <p className="text-muted text-sm mt-1">Приглашайте друзей и получайте бонусы</p>

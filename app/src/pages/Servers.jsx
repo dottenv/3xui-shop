@@ -1,3 +1,5 @@
+import { BackButton } from '../ui'
+
 const servers = [
   { name: 'Netherlands', flag: '🇳🇱', city: 'Amsterdam', ping: 45, load: 62, online: true, clients: 124, max: 200, ip: 'ams-01.cwim.ru' },
   { name: 'Germany', flag: '🇩🇪', city: 'Frankfurt', ping: 52, load: 78, online: true, clients: 156, max: 200, ip: 'fra-01.cwim.ru' },
@@ -15,6 +17,7 @@ export default function Servers() {
 
   return (
     <div className="space-y-6">
+      <BackButton />
       <div>
         <h1 className="text-xl font-bold">Серверы</h1>
         <p className="text-muted text-sm mt-1">{online.length} доступно · {offline.length} на обслуживании</p>

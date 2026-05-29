@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 // --- Spinner ---
 export function Spinner({ className = 'w-4 h-4' }) {
@@ -38,6 +39,19 @@ export function Preloader() {
         </div>
       </div>
     </div>
+  )
+}
+
+// --- Back button ---
+export function BackButton() {
+  const navigate = useNavigate()
+  return (
+    <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-sm text-muted hover:text-white transition-colors">
+      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+      </svg>
+      Назад
+    </button>
   )
 }
 

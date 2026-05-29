@@ -36,6 +36,24 @@ def create_refresh_token(user_id: int) -> str:
     )
 
 
+def create_admin_access_token(admin_id: int) -> str:
+    now = datetime.now(timezone.utc)
+    return jwt.encode(
+        {"sub": str(admin_id), "type": "admin_access", "iat": now, "exp": now + ACCESS_TOKEN_EXPIRE},
+        settings.API_SECRET_KEY,
+        algorithm=ALGORITHM,
+    )
+
+
+def create_admin_refresh_token(admin_id: int) -> str:
+    now = datetime.now(timezone.utc)
+    return jwt.encode(
+        {"sub": str(admin_id), "type": "admin_refresh", "iat": now, "exp": now + REFRESH_TOKEN_EXPIRE},
+        settings.API_SECRET_KEY,
+        algorithm=ALGORITHM,
+    )
+
+
 def decode_token(token: str) -> dict | None:
     try:
         return jwt.decode(token, settings.API_SECRET_KEY, algorithms=[ALGORITHM])

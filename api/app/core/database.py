@@ -92,6 +92,16 @@ CREATE TABLE IF NOT EXISTS "referrer_rewards" (
     "claimed_at" TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS "idx_referrer_rewards_user" ON "referrer_rewards" ("user_id");
+
+CREATE TABLE IF NOT EXISTS "admins" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "email" VARCHAR(255) NOT NULL UNIQUE,
+    "password_hash" VARCHAR(255) NOT NULL,
+    "role" VARCHAR(20) NOT NULL DEFAULT 'admin',
+    "is_active" INT NOT NULL DEFAULT 1,
+    "created_by" INT,
+    "created_at" TIMESTAMP NOT NULL
+);
 """
 
 # Add new migrations here as tuples: (name, sql)

@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom'
+import { BackButton } from '../ui'
 
 export default function Support() {
   return (
     <div className="space-y-6">
+      <BackButton />
       <div>
         <h1 className="text-xl font-bold">Поддержка</h1>
         <p className="text-muted text-sm mt-1">Мы всегда на связи</p>

@@ -1,11 +1,9 @@
 import { useEffect, useState } from 'react'
-import { useAuth } from '../AuthContext'
 import { apiCached } from '../api'
 import { CardSkeleton } from '../ui'
 import { Link } from 'react-router-dom'
 
 export default function Dashboard() {
-  const { user } = useAuth()
   const [sub, setSub] = useState(null)
   const [subLoading, setSubLoading] = useState(true)
 
@@ -13,31 +11,10 @@ export default function Dashboard() {
     apiCached('/user/subscription').then(setSub).catch(() => {}).finally(() => setSubLoading(false))
   }, [])
 
-  const initial = (user?.first_name?.[0] || user?.email?.[0] || '?').toUpperCase()
   const isPremium = sub?.is_active
-  const joinDate = user?.created_at
-    ? new Date(user.created_at).toLocaleDateString('ru-RU', { month: 'long', day: 'numeric', year: 'numeric' })
-    : '—'
 
   return (
     <div className="space-y-4">
-
-      {/* Greeting */}
-      <div className="flex items-center gap-4 bg-surface border border-border rounded-2xl p-5">
-        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-white text-xl font-bold shrink-0 shadow-lg shadow-primary/20">
-          {initial}
-        </div>
-        <div className="min-w-0 flex-1">
-          <h1 className="text-lg font-bold truncate">{user?.first_name || user?.email?.split('@')[0] || 'Пользователь'}</h1>
-          <div className="flex items-center gap-2 mt-1">
-            <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${isPremium ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'}`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${isPremium ? 'bg-green-400' : 'bg-yellow-400'}`} />
-              {isPremium ? 'Premium' : 'Free'}
-            </span>
-            <span className="text-xs text-muted">с {joinDate}</span>
-          </div>
-        </div>
-      </div>
 
       {/* Subscription */}
       {subLoading ? <CardSkeleton /> : (

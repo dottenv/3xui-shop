@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { BackButton } from '../ui'
 
 const plans = [
   { name: 'Старт', price: 499, devices: 1, speed: 'до 100 Мбит/с', period: '30 дней', features: ['1 устройство', 'Все протоколы', 'Доступ к 4 серверам', 'Поддержка 24/7'], popular: false },
@@ -9,6 +10,7 @@ const plans = [
 export default function Pricing() {
   return (
     <div className="space-y-6">
+      <BackButton />
       <div>
         <h1 className="text-xl font-bold">Тарифы</h1>
         <p className="text-muted text-sm mt-1">Выберите подходящий план</p>

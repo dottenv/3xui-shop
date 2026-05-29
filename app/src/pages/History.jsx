@@ -1,3 +1,5 @@
+import { BackButton } from '../ui'
+
 const history = [
   { type: 'payment', label: 'Пополнение баланса', detail: '+500 ₽', date: '28 мая 2026', time: '14:23', color: 'text-green-400', status: 'completed' },
   { type: 'payment', label: 'Оплата подписки — Оптимальный', detail: '-999 ₽', date: '28 мая 2026', time: '14:20', color: 'text-red-400', status: 'completed' },
@@ -12,6 +14,7 @@ const history = [
 export default function History() {
   return (
     <div className="space-y-6">
+      <BackButton />
       <div>
         <h1 className="text-xl font-bold">История</h1>
         <p className="text-muted text-sm mt-1">Все операции и действия</p>
