@@ -1,13 +1,24 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
+from app.core.database import init_db, close_db
 from app.routes import auth, user, payment, admin, webhooks
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    await init_db()
+    yield
+    await close_db()
+
 
 app = FastAPI(
     title="CWIM API",
     description="VPN Subscription Shop API",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
