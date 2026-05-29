@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Card, Typography, Switch, Select, message, Spin, Space } from 'antd'
+import { Typography, Switch, Select, message, Spin } from 'antd'
 import {
-  SettingOutlined, GlobalOutlined, MobileOutlined, TranslationOutlined,
+  SettingOutlined, GlobalOutlined, MobileOutlined,
 } from '@ant-design/icons'
 import api from '../api'
 
@@ -53,78 +53,60 @@ export default function Settings() {
   if (loading) return <Spin style={{ display: 'block', margin: '80px auto' }} />
 
   return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
-        <SettingOutlined style={{ fontSize: 20, color: '#8b5cf6' }} />
-        <Title level={4} style={{ margin: 0 }}>Настройки</Title>
+    <div style={{ maxWidth: 720, margin: '0 auto' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 32 }}>
+        <div style={{ width: 40, height: 40, background: 'linear-gradient(135deg, #667eea, #764ba2)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, color: '#fff' }}>
+          <SettingOutlined />
+        </div>
+        <div>
+          <Title level={4} style={{ margin: 0 }}>Настройки системы</Title>
+          <Text type="secondary" style={{ fontSize: 13 }}>Управление конфигурацией сервиса</Text>
+        </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
-        <Card
-          title={
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <GlobalOutlined style={{ color: '#2563eb' }} />
-              <span>Лендинг (vpn.cwim.ru)</span>
-            </div>
-          }
-          style={{ flex: 1, minWidth: 300, borderRadius: 12 }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <Text strong>Режим обслуживания</Text>
-              <br />
-              <Text type="secondary" style={{ fontSize: 13 }}>При включении сайт показывает страницу о технических работах</Text>
-            </div>
-            <Switch
-              checked={settings?.maintenance_site === '1'}
-              onChange={() => toggle('maintenance_site')}
-              loading={saving === 'maintenance_site'}
-            />
+      <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e8e8e8', overflow: 'hidden' }}>
+        <div style={{ padding: '20px 24px', borderBottom: '1px solid #f0f0f0' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <GlobalOutlined style={{ color: '#8b5cf6' }} />
+            <Text strong style={{ fontSize: 15 }}>Общие</Text>
           </div>
-        </Card>
+        </div>
 
-        <Card
-          title={
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <MobileOutlined style={{ color: '#059669' }} />
-              <span>Приложение (app.cwim.ru)</span>
-            </div>
-          }
-          style={{ flex: 1, minWidth: 300, borderRadius: 12 }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <Text strong>Режим обслуживания</Text>
-              <br />
-              <Text type="secondary" style={{ fontSize: 13 }}>При включении приложение показывает заглушку и не работает</Text>
-            </div>
-            <Switch
-              checked={settings?.maintenance_app === '1'}
-              onChange={() => toggle('maintenance_app')}
-              loading={saving === 'maintenance_app'}
-            />
+        <div style={{ padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <Text strong>Язык по умолчанию</Text>
+            <br />
+            <Text type="secondary" style={{ fontSize: 13 }}>Язык интерфейса для новых пользователей приложения</Text>
           </div>
-        </Card>
+          <Select
+            value={settings?.lang || 'ru'}
+            onChange={saveLang}
+            style={{ width: 160 }}
+            options={langs.map(l => ({ value: l, label: l === 'ru' ? 'Русский' : l === 'en' ? 'English' : l }))}
+          />
+        </div>
+      </div>
 
-        <Card
-          title={
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <TranslationOutlined style={{ color: '#8b5cf6' }} />
-              <span>Язык (язык по умолчанию)</span>
-            </div>
-          }
-          style={{ flex: 1, minWidth: 300, borderRadius: 12 }}
-        >
-          <Space direction="vertical" style={{ width: '100%' }}>
-            <Text>Язык интерфейса по умолчанию для приложения</Text>
-            <Select
-              value={settings?.lang || 'ru'}
-              onChange={saveLang}
-              style={{ width: 200 }}
-              options={langs.map(l => ({ value: l, label: l === 'ru' ? 'Русский' : l === 'en' ? 'English' : l }))}
-            />
-          </Space>
-        </Card>
+      <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e8e8e8', overflow: 'hidden', marginTop: 16 }}>
+        <div style={{ padding: '20px 24px', borderBottom: '1px solid #f0f0f0' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <MobileOutlined style={{ color: '#059669' }} />
+            <Text strong style={{ fontSize: 15 }}>Приложение (app.cwim.ru)</Text>
+          </div>
+        </div>
+
+        <div style={{ padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <Text strong>Режим обслуживания</Text>
+            <br />
+            <Text type="secondary" style={{ fontSize: 13 }}>При включении приложение показывает заглушку и перестаёт работать</Text>
+          </div>
+          <Switch
+            checked={settings?.maintenance_app === '1'}
+            onChange={() => toggle('maintenance_app')}
+            loading={saving === 'maintenance_app'}
+          />
+        </div>
       </div>
     </div>
   )

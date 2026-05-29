@@ -5,7 +5,7 @@ from app.routes.admin import get_current_admin
 
 router = APIRouter()
 
-ALLOWED_KEYS = {"maintenance_site", "maintenance_app", "lang"}
+ALLOWED_KEYS = {"maintenance_app", "lang"}
 
 
 class SettingUpdate(BaseModel):
@@ -24,7 +24,7 @@ async def update_settings(body: SettingUpdate, admin=Depends(get_current_admin))
     for key, value in updates.items():
         if key not in ALLOWED_KEYS:
             raise HTTPException(status_code=400, detail=f"Unknown setting: {key}")
-        if key in ("maintenance_site", "maintenance_app") and value not in ("0", "1"):
+        if key == "maintenance_app" and value not in ("0", "1"):
             raise HTTPException(status_code=400, detail=f"Invalid value for {key}: must be '0' or '1'")
         if key == "lang" and value not in ("ru", "en"):
             raise HTTPException(status_code=400, detail=f"Invalid lang: {value}")
