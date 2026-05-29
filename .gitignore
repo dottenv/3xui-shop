@@ -179,5 +179,14 @@ cython_debug/
 
 # Project
 .refact/
-node_modules/
 /.refact
+
+# Dependencies
+node_modules/
+
+# Build outputs
+crm/dist/
+app/dist/
+
+# Environment
+.env
