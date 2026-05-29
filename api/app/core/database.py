@@ -121,26 +121,6 @@ CREATE TABLE IF NOT EXISTS "admins" (
 # Add new migrations here as tuples: (name, sql)
 MIGRATIONS: list[tuple[str, str]] = [
     ("001_admins", """
-CREATE TABLE IF NOT EXISTS "subscriptions" (
-    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "user_id" INT NOT NULL,
-    "plan_id" VARCHAR(50) NOT NULL,
-    "server_id" INT NOT NULL,
-    "client_uuid" VARCHAR(36) NOT NULL UNIQUE,
-    "devices" INT NOT NULL DEFAULT 1,
-    "duration_days" INT NOT NULL DEFAULT 30,
-    "traffic_up" BIGINT NOT NULL DEFAULT 0,
-    "traffic_down" BIGINT NOT NULL DEFAULT 0,
-    "traffic_limit" BIGINT NOT NULL DEFAULT 0,
-    "starts_at" TIMESTAMP NOT NULL,
-    "expires_at" TIMESTAMP NOT NULL,
-    "is_active" INT NOT NULL DEFAULT 1,
-    "auto_renew" INT NOT NULL DEFAULT 0,
-    "created_at" TIMESTAMP NOT NULL,
-    "updated_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-CREATE INDEX IF NOT EXISTS "idx_sub_user" ON "subscriptions" ("user_id");
-
 CREATE TABLE IF NOT EXISTS "admins" (
             "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
             "email" VARCHAR(255) NOT NULL UNIQUE,
