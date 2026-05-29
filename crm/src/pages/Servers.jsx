@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Table, Button, Modal, Form, Input, InputNumber, Select, Space, Tag, message, Typography, Tooltip } from 'antd'
-import { PlusOutlined, ReloadOutlined, ApiOutlined, ThunderboltOutlined, KeyOutlined } from '@ant-design/icons'
+import { PlusOutlined, ReloadOutlined, ApiOutlined, ThunderboltOutlined, KeyOutlined, EyeInvisibleOutlined } from '@ant-design/icons'
 import { apiJson } from '../api'
 
 const { Title, Text } = Typography
@@ -33,12 +33,16 @@ export default function Servers() {
   function openCreate() {
     setEditing(null)
     form.resetFields()
+    form.setFieldsValue({ port: 443, sub_port: 2096, inbound_id: 1, max_clients: 200, protocol: 'vless' })
     setModalOpen(true)
   }
 
   function openEdit(record) {
     setEditing(record)
-    form.setFieldsValue(record)
+    const vals = { ...record }
+    delete vals.xui_has_token
+    delete vals.id
+    form.setFieldsValue(vals)
     setModalOpen(true)
   }
 
@@ -46,9 +50,13 @@ export default function Servers() {
     const values = await form.validateFields()
     try {
       if (editing) {
+        const cleaned = {}
+        for (const [k, v] of Object.entries(values)) {
+          if (v !== undefined && v !== null && v !== '') cleaned[k] = v
+        }
         await apiJson(`/admin/servers/${editing.id}`, {
           method: 'PUT',
-          body: JSON.stringify(values),
+          body: JSON.stringify(cleaned),
         })
         message.success('Сервер обновлён')
       } else {
@@ -142,10 +150,12 @@ export default function Servers() {
     { title: 'Inbound', dataIndex: 'inbound_id', key: 'inbound_id', width: 80 },
     { title: 'Протокол', dataIndex: 'protocol', key: 'protocol', width: 100 },
     {
-      title: 'Токен', key: 'api_token', width: 80,
-      render: (_, r) => r.xui_api_token
-        ? <Tag color="purple" icon={<KeyOutlined />}>API</Tag>
-        : <Tag>Логин</Tag>,
+      title: 'Аутентификация', key: 'auth', width: 100,
+      render: (_, r) => (
+        r.xui_has_token
+          ? <Tag color="purple" icon={<KeyOutlined />}>API Token</Tag>
+          : <Tag icon={<EyeInvisibleOutlined />}>Логин/Пароль</Tag>
+      ),
     },
     {
       title: 'Статус', key: 'status', width: 120,
@@ -161,7 +171,7 @@ export default function Servers() {
       render: (_, r) => `${r.current_clients}/${r.max_clients}`,
     },
     {
-      title: 'Действия', key: 'actions', width: 280,
+      title: 'Действия', key: 'actions', width: 300,
       render: (_, r) => (
         <Space size="small" wrap>
           <Tooltip title="Проверить подключение">
@@ -185,7 +195,7 @@ export default function Servers() {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <Title level={4} style={{ margin: 0 }}>Серверы</Title>
+        <Title level={4} style={{ margin: 0 }}>Серверы (ноды)</Title>
         <Space>
           <Button icon={<ReloadOutlined />} onClick={fetchServers}>Обновить</Button>
           <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>Добавить сервер</Button>
@@ -197,7 +207,7 @@ export default function Servers() {
         columns={columns}
         rowKey="id"
         loading={loading}
-        scroll={{ x: 1200 }}
+        scroll={{ x: 1300 }}
         pagination={false}
       />
 
@@ -218,10 +228,10 @@ export default function Servers() {
             <Input />
           </Form.Item>
           <Space style={{ width: '100%' }} size={16}>
-            <Form.Item name="port" label="Порт" initialValue={443}>
+            <Form.Item name="port" label="Порт панели" initialValue={443}>
               <InputNumber min={1} max={65535} />
             </Form.Item>
-            <Form.Item name="sub_port" label="Sub Port" initialValue={2096}>
+            <Form.Item name="sub_port" label="Sub Port (подписки)" initialValue={2096}>
               <InputNumber min={1} max={65535} />
             </Form.Item>
           </Space>
@@ -253,23 +263,35 @@ export default function Servers() {
           </Space>
 
           <Form.Item name="xui_url" label="XUI URL (если отличается от host)">
-            <Input placeholder="Оставьте пустым если host = xui_url" />
+            <Input placeholder="Оставьте пустым, если host = xui_url" />
           </Form.Item>
 
-          <Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>
-            Аутентификация: укажите Логин+Пароль ИЛИ API Token
+          <Text type="secondary" style={{ display: 'block', marginBottom: 4 }}>
+            Аутентификация — укажите логин+пароль ИЛИ API токен.
+            {editing && <span> Оставьте поле пустым, чтобы не менять.</span>}
           </Text>
+
           <Space style={{ width: '100%' }} size={16}>
-            <Form.Item name="xui_username" label="XUI Username" style={{ flex: 1 }}>
+            <Form.Item name="xui_username" label="Username" style={{ flex: 1 }}>
               <Input placeholder="admin" />
             </Form.Item>
-            <Form.Item name="xui_password" label="XUI Password" style={{ flex: 1 }}>
-              <Input.Password placeholder="Оставьте пустым если не меняется" />
+            <Form.Item name="xui_password" label="Password" style={{ flex: 1 }}>
+              <Input.Password placeholder="Оставьте пустым, если не меняется" />
             </Form.Item>
           </Space>
-          <Form.Item name="xui_api_token" label="XUI API Token (новый способ)">
-            <Input.Password placeholder="Из Settings → Security → API Token" />
+
+          <Form.Item name="xui_api_token" label="API Token (новый способ)">
+            <Input.Password
+              placeholder={editing ? 'Оставьте пустым, если не меняется' : 'Из Settings → Security → API Token'}
+            />
           </Form.Item>
+
+          {editing && (
+            <Text type="secondary">
+              API Token {editing.xui_has_token ? 'уже установлен' : 'не установлен'}.
+              {' '}Заполните поле выше, чтобы изменить.
+            </Text>
+          )}
         </Form>
       </Modal>
 
@@ -290,12 +312,12 @@ export default function Servers() {
               { title: 'Remark', dataIndex: 'remark' },
               { title: 'Порт', dataIndex: 'port', width: 80 },
               { title: 'Протокол', dataIndex: 'protocol', width: 100 },
-              { title: 'Клиентов', dataIndex: ['clientStats', 'length'], width: 100, render: (_, r) => r.clientStats?.length || 0 },
+              { title: 'Клиентов', key: 'clients', width: 100, render: (_, r) => r.clientStats?.length || 0 },
               {
                 title: 'Статус', width: 100,
                 render: (_, r) => <Tag color={r.enable ? 'green' : 'red'}>{r.enable ? 'On' : 'Off'}</Tag>,
               },
-              { title: 'Трафик (up/down)', width: 160, render: (_, r) => `${formatBytes(r.up || 0)} / ${formatBytes(r.down || 0)}` },
+              { title: 'Трафик (up/down)', width: 180, render: (_, r) => `${fmtBytes(r.up)} / ${fmtBytes(r.down)}` },
             ]}
             scroll={{ x: 700 }}
           />
@@ -305,11 +327,11 @@ export default function Servers() {
   )
 }
 
-function formatBytes(bytes) {
+function fmtBytes(bytes) {
   if (!bytes) return '0 B'
-  const units = ['B', 'KB', 'MB', 'GB', 'TB']
+  const u = ['B', 'KB', 'MB', 'GB', 'TB']
   let i = 0
   let v = bytes
-  while (v >= 1024 && i < units.length - 1) { v /= 1024; i++ }
-  return `${v.toFixed(1)} ${units[i]}`
+  while (v >= 1024 && i < u.length - 1) { v /= 1024; i++ }
+  return `${v.toFixed(1)} ${u[i]}`
 }

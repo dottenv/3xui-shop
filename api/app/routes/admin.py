@@ -265,7 +265,7 @@ async def get_servers(admin: Admin = Depends(get_current_admin)):
             "protocol": s.protocol,
             "xui_url": s.xui_url,
             "xui_username": s.xui_username,
-            "xui_api_token": bool(s.xui_api_token),
+            "xui_has_token": bool(s.xui_api_token),
             "is_dedicated": s.is_dedicated,
             "ssh_host": s.ssh_host,
             "ssh_port": s.ssh_port,
