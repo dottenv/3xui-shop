@@ -299,6 +299,18 @@ async def run_migrations():
         else:
             print("[db] Migration 008_server_config: columns already present, skipped")
 
+    # Migration 009 — server API token
+    if "009_server_api_token" not in applied:
+        col_info = await conn.execute_query("PRAGMA table_info('servers')")
+        col_names = {r["name"] for r in col_info[1]}
+        if "xui_api_token" not in col_names:
+            await conn.execute_query('ALTER TABLE "servers" ADD COLUMN "xui_api_token" VARCHAR(255) NOT NULL DEFAULT \'\'')
+        await conn.execute_query(
+            f'INSERT OR IGNORE INTO "{SCHEMA_MIGRATIONS_TABLE}" ("name") VALUES (?)',
+            ["009_server_api_token"],
+        )
+        print("[db] Applied migration: 009_server_api_token")
+
     print("[db] Schema up to date.")
 
 

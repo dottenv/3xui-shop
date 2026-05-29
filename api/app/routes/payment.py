@@ -54,6 +54,7 @@ async def issue_subscription(transaction: Transaction, user: User, plan_id: str)
             host=server.xui_url or server.host,
             username=server.xui_username,
             password=server.xui_password,
+            api_token=server.xui_api_token,
         )
         try:
             await xui.add_client(

@@ -265,6 +265,7 @@ async def get_servers(admin: Admin = Depends(get_current_admin)):
             "protocol": s.protocol,
             "xui_url": s.xui_url,
             "xui_username": s.xui_username,
+            "xui_api_token": bool(s.xui_api_token),
             "is_dedicated": s.is_dedicated,
             "ssh_host": s.ssh_host,
             "ssh_port": s.ssh_port,
@@ -292,6 +293,7 @@ class ServerCreateRequest(BaseModel):
     xui_url: str = Field(default="")
     xui_username: str = Field(default="")
     xui_password: str = Field(default="")
+    xui_api_token: str = Field(default="")
     is_dedicated: bool = Field(default=False)
     ssh_host: str = Field(default="")
     ssh_port: int = Field(default=22)
@@ -321,6 +323,7 @@ class ServerUpdateRequest(BaseModel):
     xui_url: Optional[str] = None
     xui_username: Optional[str] = None
     xui_password: Optional[str] = None
+    xui_api_token: Optional[str] = None
     is_dedicated: Optional[bool] = None
     ssh_host: Optional[str] = None
     ssh_port: Optional[int] = None
@@ -370,6 +373,7 @@ async def test_server_connection(server_id: int, admin: Admin = Depends(get_curr
         host=server.xui_url or server.host,
         username=server.xui_username,
         password=server.xui_password,
+        api_token=server.xui_api_token,
     )
     try:
         ok = await xui.test_connection()
@@ -412,6 +416,7 @@ async def revoke_subscription(sub_id: int, admin: Admin = Depends(get_current_ad
                     host=server.xui_url or server.host,
                     username=server.xui_username,
                     password=server.xui_password,
+                    api_token=server.xui_api_token,
                 )
                 await xui.delete_client(server.inbound_id, sub.client_uuid)
                 await xui.close()
@@ -431,6 +436,7 @@ async def clean_depleted(server_id: int, admin: Admin = Depends(get_current_admi
         host=server.xui_url or server.host,
         username=server.xui_username,
         password=server.xui_password,
+        api_token=server.xui_api_token,
     )
     try:
         await xui.clean_depleted(server.inbound_id)
@@ -482,6 +488,46 @@ async def get_transactions(admin: Admin = Depends(get_current_admin)):
         }
         for t in txns
     ]
+
+
+@router.post("/servers/{server_id}/fetch-inbounds")
+async def fetch_server_inbounds(server_id: int, admin: Admin = Depends(get_current_admin)):
+    server = await Server.get_or_none(id=server_id)
+    if not server:
+        raise HTTPException(status_code=404, detail="Server not found")
+    xui = XuiService(
+        host=server.xui_url or server.host,
+        username=server.xui_username,
+        password=server.xui_password,
+        api_token=server.xui_api_token,
+    )
+    try:
+        inbounds = await xui.get_inbounds()
+        return {"success": True, "inbounds": inbounds}
+    except Exception as e:
+        return {"success": False, "message": str(e)}
+    finally:
+        await xui.close()
+
+
+@router.post("/servers/{server_id}/restart-xray")
+async def restart_server_xray(server_id: int, admin: Admin = Depends(get_current_admin)):
+    server = await Server.get_or_none(id=server_id)
+    if not server:
+        raise HTTPException(status_code=404, detail="Server not found")
+    xui = XuiService(
+        host=server.xui_url or server.host,
+        username=server.xui_username,
+        password=server.xui_password,
+        api_token=server.xui_api_token,
+    )
+    try:
+        result = await xui.restart_xray()
+        return {"success": True, "message": result.get("msg", "Xray restarted")}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        await xui.close()
 
 
 @router.get("/stats")

@@ -26,6 +26,7 @@ class Server(Model):
     xui_url = fields.CharField(max_length=255, default="")
     xui_username = fields.CharField(max_length=100, default="")
     xui_password = fields.CharField(max_length=255, default="")
+    xui_api_token = fields.CharField(max_length=255, default="")
 
     is_dedicated = fields.BooleanField(default=False)
 
