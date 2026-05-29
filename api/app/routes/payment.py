@@ -68,7 +68,7 @@ async def issue_subscription(user: User, plan_id: str) -> Subscription:
     email_tag = f"cwim_{safe_name}_{user.id}"
     traffic_limit_gb = 50
 
-    # Create XUI client
+    # Create XUI client (delete existing client with same email first if any)
     xui = XuiService(
         base_url=build_base_url(server.host, server.port, server.xui_url),
         username=server.xui_username,
@@ -76,6 +76,9 @@ async def issue_subscription(user: User, plan_id: str) -> Subscription:
         api_token=server.xui_api_token,
     )
     try:
+        existing = await xui.get_client_by_email(email_tag)
+        if existing:
+            await xui._client.delete_client(email=email_tag)
         resp = await xui.add_client(
             inbound_id=server.inbound_id,
             email=email_tag,
