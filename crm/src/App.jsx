@@ -1,67 +1,52 @@
-import { useState, useEffect } from 'react'
+import { Spin } from 'antd'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { AuthProvider, useAuth } from './AuthContext'
+import Layout from './Layout'
+import AuthPage from './pages/AuthPage'
+import Dashboard from './pages/Dashboard'
+import Users from './pages/Users'
+import Orders from './pages/Orders'
+import Admins from './pages/Admins'
 
-function App() {
-  const [stats, setStats] = useState({
-    users: 0,
-    transactions: 0,
-    revenue: 0,
-    servers: 0,
-  })
+function Guard({ children }) {
+  const { admin, loading, hasAdmins } = useAuth()
 
-  useEffect(() => {
-    fetch('/api/admin/stats')
-      .then(res => res.json())
-      .then(data => setStats(data))
-      .catch(() => {})
-  }, [])
-
-  return (
-    <div className="crm">
-      <aside className="sidebar">
-        <h1 className="logo">CWIM CRM</h1>
-        <nav>
-          <a href="#dashboard" className="active">Дашборд</a>
-          <a href="#users">Пользователи</a>
-          <a href="#servers">Серверы</a>
-          <a href="#payments">Платежи</a>
-          <a href="#promocodes">Промокоды</a>
-          <a href="#settings">Настройки</a>
-        </nav>
-      </aside>
-
-      <main className="main">
-        <header className="topbar">
-          <h2>Дашборд</h2>
-        </header>
-
-        <section className="content">
-          <div className="stats-grid">
-            <div className="stat-card">
-              <span className="stat-value">{stats.users}</span>
-              <span className="stat-label">Пользователей</span>
-            </div>
-            <div className="stat-card">
-              <span className="stat-value">{stats.transactions}</span>
-              <span className="stat-label">Платежей</span>
-            </div>
-            <div className="stat-card">
-              <span className="stat-value">{stats.revenue} ₽</span>
-              <span className="stat-label">Выручка</span>
-            </div>
-            <div className="stat-card">
-              <span className="stat-value">{stats.servers}</span>
-              <span className="stat-label">Серверов</span>
-            </div>
-          </div>
-
-          <div className="panel">
-            <h3>Последние платежи</h3>
-            <p className="muted">Нет данных</p>
-          </div>
-        </section>
-      </main>
+  if (loading) return (
+    <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Spin size="large" />
     </div>
   )
+
+  // hasAdmins = null means still loading
+  if (hasAdmins === null) return (
+    <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Spin size="large" />
+    </div>
+  )
+
+  // No admin + hasAdmins=false -> registration
+  // No admin + hasAdmins=true  -> login
+  if (!admin) return <AuthPage />
+
+  return children
 }
 
-export default App
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <Guard>
+          <Routes>
+            <Route path="/" element={<Layout />}>
+              <Route index element={<Dashboard />} />
+              <Route path="users" element={<Users />} />
+              <Route path="orders" element={<Orders />} />
+              <Route path="admins" element={<Admins />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Route>
+          </Routes>
+        </Guard>
+      </AuthProvider>
+    </BrowserRouter>
+  )
+}
