@@ -364,6 +364,7 @@ function NodesTab() {
     { title: 'ID', dataIndex: 'id', key: 'id', width: 50 },
     { title: 'Название', dataIndex: 'name', key: 'name', render: (v, r) => <>{r.flag || ''} {v}</> },
     { title: 'URL ноды', dataIndex: 'xui_url', key: 'xui_url', ellipsis: true, render: (v, r) => v || `${r.host}:${r.port}` },
+    { title: 'Адрес (конфиг)', dataIndex: 'address', key: 'address', ellipsis: true, render: (v, r) => v || <span style={{ color: '#999' }}>{r.host}</span> },
     {
       title: 'Аутентификация', key: 'auth', width: 100,
       render: (_, r) => r.xui_has_token
@@ -417,6 +418,11 @@ function NodesTab() {
           <Form.Item name="xui_url" label="URL панели 3X-UI" rules={[{ required: true, message: 'Введите URL панели' }]}
             help="Полный URL: https://ip:порт/путь (если есть) или просто ip:порт">
             <Input placeholder="https://192.168.1.1:17166/abc123 или 192.168.1.1:17166" />
+          </Form.Item>
+
+          <Form.Item name="address" label="Публичный адрес (для конфигов клиентов)"
+            help="IP или домен, который будет в конфигах. Если пусто — используется host из URL панели">
+            <Input placeholder="91.242.235.152 или de1.example.com" />
           </Form.Item>
 
           <div style={{ background: '#fafafa', padding: 12, borderRadius: 8, marginBottom: 16 }}>
@@ -618,7 +624,8 @@ function LogicTab() {
 
   const columns = [
     { title: 'Сервер', dataIndex: 'name', key: 'name', render: (v, r) => <>{r.flag || ''} {v}</> },
-    { title: 'Хост', dataIndex: 'host', key: 'host' },
+    { title: 'Хост (API)', dataIndex: 'host', key: 'host' },
+    { title: 'Адрес (конфиг)', dataIndex: 'address', key: 'address', render: (v, r) => v || <span style={{ color: '#999' }}>{r.host}</span> },
     {
       title: 'Тип', key: 'type', width: 160,
       render: (_, r) => (
