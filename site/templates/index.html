@@ -1,108 +1,230 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CWIM - Быстрый и безопасный VPN</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-</head>
-<body>
-    <header class="header">
-        <div class="container">
-            <a href="/" class="logo">CWIM</a>
-            <nav class="nav">
-                <a href="/features">Возможности</a>
-                <a href="/pricing">Тарифы</a>
-                <a href="/faq">FAQ</a>
-                <a href="https://app.cwim.ru" class="btn btn-primary">Войти</a>
-            </nav>
+{% extends "base.html" %}
+{% block title %}CWIM — Быстрый и безопасный VPN{% endblock %}
+{% block content %}
+
+<section class="hero" id="hero">
+    <div class="container">
+        <div class="hero-badge"><i class="fas fa-shield-halved"></i> Новая версия 2.0</div>
+        <h1 class="hero-title">Ваш ключ к <span class="gradient-text">свободному</span> интернету</h1>
+        <p class="hero-subtitle">Обходите блокировки, защищайте свои данные и получайте доступ к любому контенту из любой точки мира с максимальной скоростью.</p>
+        <div class="hero-cta">
+            <a href="https://app.cwim.ru" class="btn btn-primary btn-lg"><i class="fas fa-rocket"></i> Начать бесплатно</a>
+            <a href="/pricing" class="btn btn-outline btn-lg"><i class="fas fa-tags"></i> Выбрать тариф</a>
         </div>
-    </header>
+        <div class="hero-stats">
+            <div class="stat"><i class="fas fa-server stat-icon"></i><span class="stat-number">10+</span><span class="stat-label">Серверов</span></div>
+            <div class="stat"><i class="fas fa-gauge-high stat-icon"></i><span class="stat-number">99.9%</span><span class="stat-label">Аптайм</span></div>
+            <div class="stat"><i class="fas fa-headset stat-icon"></i><span class="stat-number">24/7</span><span class="stat-label">Поддержка</span></div>
+            <div class="stat"><i class="fas fa-users stat-icon"></i><span class="stat-number">5k+</span><span class="stat-label">Пользователей</span></div>
+        </div>
+    </div>
+    <div class="hero-bg-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+    </div>
+</section>
 
-    <main>
-        <section class="hero">
-            <div class="container">
-                <h1>Быстрый и безопасный VPN</h1>
-                <p class="hero-subtitle">Защитите свою приватность. Получите доступ к любому контенту из любой точки мира.</p>
-                <div class="hero-cta">
-                    <a href="https://app.cwim.ru" class="btn btn-primary btn-lg">Начать использовать</a>
-                    <a href="/pricing" class="btn btn-outline btn-lg">Узнать цены</a>
-                </div>
-                <div class="hero-stats">
-                    <div class="stat">
-                        <span class="stat-number">10+</span>
-                        <span class="stat-label">Серверов</span>
-                    </div>
-                    <div class="stat">
-                        <span class="stat-number">99.9%</span>
-                        <span class="stat-label">Аптайм</span>
-                    </div>
-                    <div class="stat">
-                        <span class="stat-number">24/7</span>
-                        <span class="stat-label">Поддержка</span>
-                    </div>
-                </div>
+<section class="features-preview reveal" id="why">
+    <div class="container">
+        <div class="section-label"><i class="fas fa-star"></i> Почему CWIM</div>
+        <h2 class="section-title">Всё что нужно для безопасного серфинга</h2>
+        <div class="features-grid">
+            <div class="feature-card reveal delay-1">
+                <div class="feature-icon"><i class="fas fa-bolt"></i></div>
+                <h3>Молниеносная скорость</h3>
+                <p>Серверы с оптимизированной инфраструктурой и прямыми каналами для максимальной скорости соединения.</p>
             </div>
-        </section>
-
-        <section class="features-preview">
-            <div class="container">
-                <h2>Почему CWIM?</h2>
-                <div class="features-grid">
-                    <div class="feature-card">
-                        <div class="feature-icon">&#9889;</div>
-                        <h3>Молниеносная скорость</h3>
-                        <p>Серверы с оптимизированной инфраструктурой для максимальной скорости соединения.</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">&#128274;</div>
-                        <h3>Безопасность</h3>
-                        <p>Шифрование военного класса. Никто не сможет перехватить ваши данные.</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">&#127760;</div>
-                        <h3>Обход блокировок</h3>
-                        <p>Полный доступ к любому контенту без ограничений и блокировок.</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="feature-icon">&#128187;</div>
-                        <h3>Мультиустройства</h3>
-                        <p>Одна подписка для всех ваших устройств: телефон, планшет, компьютер.</p>
-                    </div>
-                </div>
-                <a href="/features" class="btn btn-outline">Все возможности</a>
+            <div class="feature-card reveal delay-2">
+                <div class="feature-icon"><i class="fas fa-shield"></i></div>
+                <h3>Военное шифрование</h3>
+                <p>AES-256 шифрование. Ваши данные защищены от перехвата на всех уровнях.</p>
             </div>
-        </section>
-
-        <section class="cta">
-            <div class="container">
-                <h2>Готовы начать?</h2>
-                <p>Подключите VPN за 2 минуты. Без платежных данных для тестового периода.</p>
-                <a href="https://app.cwim.ru" class="btn btn-primary btn-lg">Зарегистрироваться</a>
+            <div class="feature-card reveal delay-3">
+                <div class="feature-icon"><i class="fas fa-globe"></i></div>
+                <h3>Обход блокировок</h3>
+                <p>Современные протоколы VLESS + Reality обходят DPI и глубокую проверку пакетов.</p>
             </div>
-        </section>
-    </main>
-
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-brand">
-                    <span class="logo">CWIM</span>
-                    <p>Быстрый и безопасный VPN сервис</p>
-                </div>
-                <div class="footer-links">
-                    <a href="/features">Возможности</a>
-                    <a href="/pricing">Тарифы</a>
-                    <a href="/faq">FAQ</a>
-                    <a href="mailto:support@cwim.ru">Поддержка</a>
-                </div>
+            <div class="feature-card reveal delay-4">
+                <div class="feature-icon"><i class="fas fa-mobile-screen"></i></div>
+                <h3>Все устройства</h3>
+                <p>Одна подписка для Windows, macOS, Linux, iOS, Android и даже роутеров.</p>
             </div>
-            <div class="footer-bottom">
-                <p>&copy; 2026 CWIM. Все права защищены.</p>
+            <div class="feature-card reveal delay-1">
+                <div class="feature-icon"><i class="fas fa-eye-slash"></i></div>
+                <h3>Zero-logs политика</h3>
+                <p>Мы не храним историю ваших подключений. Полная анонимность гарантирована.</p>
+            </div>
+            <div class="feature-card reveal delay-2">
+                <div class="feature-icon"><i class="fas fa-arrow-rotate-right"></i></div>
+                <h3>Авто-продление</h3>
+                <p>Настройте автоплатёж и забудьте о ручном продлении — сервис всегда активен.</p>
             </div>
         </div>
-    </footer>
-</body>
-</html>
+    </div>
+</section>
+
+<section class="protocols reveal" id="protocols">
+    <div class="container">
+        <div class="section-label"><i class="fas fa-network-wired"></i> Технологии</div>
+        <h2 class="section-title">Современные протоколы</h2>
+        <div class="protocols-grid">
+            <div class="protocol-card reveal delay-1">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='none' stroke='%232563eb' stroke-width='4'/%3E%3Cpath d='M30 50 L45 65 L70 35' fill='none' stroke='%232563eb' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E" alt="VLESS" class="protocol-logo">
+                <h3>VLESS + Reality</h3>
+                <p>Самый современный протокол. Не требует сертификатов, имитирует обычный HTTPS трафик.</p>
+            </div>
+            <div class="protocol-card reveal delay-2">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='none' stroke='%2310b981' stroke-width='4'/%3E%3Cpath d='M30 50 L45 65 L70 35' fill='none' stroke='%2310b981' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E" alt="Trojan" class="protocol-logo">
+                <h3>Trojan</h3>
+                <p>Маскировка под HTTPS через 443 порт. Высокая скорость и стабильность.</p>
+            </div>
+            <div class="protocol-card reveal delay-3">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='none' stroke='%23f59e0b' stroke-width='4'/%3E%3Cpath d='M30 50 L45 65 L70 35' fill='none' stroke='%23f59e0b' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E" alt="WS" class="protocol-logo">
+                <h3>WebSocket + TLS</h3>
+                <p>Работа через WebSocket с TLS шифрованием. Идеален для обхода через CDN.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="pricing-preview reveal" id="plans">
+    <div class="container">
+        <div class="section-label"><i class="fas fa-tag"></i> Тарифы</div>
+        <h2 class="section-title">Выберите свой план</h2>
+        <div class="pricing-grid">
+            <div class="pricing-card reveal delay-1">
+                <h3>Старт</h3>
+                <div class="price"><span class="amount">250</span><span class="currency">₽</span><span class="period">/мес</span></div>
+                <p class="plan-desc">Для одного устройства</p>
+                <ul class="features-list">
+                    <li><i class="fas fa-check"></i> 1 устройство</li>
+                    <li><i class="fas fa-check"></i> Все серверы</li>
+                    <li><i class="fas fa-check"></i> Все протоколы</li>
+                    <li><i class="fas fa-check"></i> Базовый приоритет</li>
+                </ul>
+                <a href="https://app.cwim.ru" class="btn btn-outline btn-block">Выбрать</a>
+            </div>
+            <div class="pricing-card featured reveal delay-2">
+                <div class="badge">Популярный</div>
+                <h3>Оптимальный</h3>
+                <div class="price"><span class="amount">500</span><span class="currency">₽</span><span class="period">/мес</span></div>
+                <p class="plan-desc">Для всей семьи</p>
+                <ul class="features-list">
+                    <li><i class="fas fa-check"></i> 3 устройства</li>
+                    <li><i class="fas fa-check"></i> Все серверы</li>
+                    <li><i class="fas fa-check"></i> Все протоколы</li>
+                    <li><i class="fas fa-check"></i> Приоритетная поддержка</li>
+                    <li><i class="fas fa-check"></i> До -30% при оплате за год</li>
+                </ul>
+                <a href="https://app.cwim.ru" class="btn btn-primary btn-block">Выбрать</a>
+            </div>
+            <div class="pricing-card reveal delay-3">
+                <h3>Максимум</h3>
+                <div class="price"><span class="amount">750</span><span class="currency">₽</span><span class="period">/мес</span></div>
+                <p class="plan-desc">Для всей техники</p>
+                <ul class="features-list">
+                    <li><i class="fas fa-check"></i> 5 устройств</li>
+                    <li><i class="fas fa-check"></i> Все серверы</li>
+                    <li><i class="fas fa-check"></i> Все протоколы</li>
+                    <li><i class="fas fa-check"></i> VIP поддержка 24/7</li>
+                    <li><i class="fas fa-check"></i> До -40% при оплате за год</li>
+                </ul>
+                <a href="https://app.cwim.ru" class="btn btn-outline btn-block">Выбрать</a>
+            </div>
+        </div>
+        <div class="pricing-note"><i class="fas fa-info-circle"></i> Также доступны тарифы на 60, 180 и 365 дней со скидкой до 40%. Способы оплаты: банковские карты, криптовалюта, электронные кошельки.</div>
+    </div>
+</section>
+
+<section class="reviews reveal" id="reviews">
+    <div class="container">
+        <div class="section-label"><i class="fas fa-comments"></i> Отзывы</div>
+        <h2 class="section-title">Что говорят пользователи</h2>
+        <div class="reviews-grid">
+            <div class="review-card reveal delay-1">
+                <div class="review-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+                <p class="review-text">Отличный сервис! Пользуюсь уже 3 месяца, скорость стабильная, поддержка отвечает быстро. Рекомендую.</p>
+                <div class="review-author">
+                    <div class="review-avatar"><i class="fas fa-user"></i></div>
+                    <div><strong>Алексей</strong><span>Пользователь 3 месяца</span></div>
+                </div>
+            </div>
+            <div class="review-card reveal delay-2">
+                <div class="review-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>
+                <p class="review-text">Перепробовал много VPN, этот лучший по соотношению цена/качество. На 5 устройствах работает отлично.</p>
+                <div class="review-author">
+                    <div class="review-avatar"><i class="fas fa-user"></i></div>
+                    <div><strong>Екатерина</strong><span>Пользователь 6 месяцев</span></div>
+                </div>
+            </div>
+            <div class="review-card reveal delay-3">
+                <div class="review-stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i></div>
+                <p class="review-text">Отличная скорость на европейских серверах, YouTube летает. Пробный период дал возможность протестировать.</p>
+                <div class="review-author">
+                    <div class="review-avatar"><i class="fas fa-user"></i></div>
+                    <div><strong>Дмитрий</strong><span>Пользователь 1 месяц</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="faq-preview reveal" id="faq">
+    <div class="container">
+        <div class="section-label"><i class="fas fa-question-circle"></i> FAQ</div>
+        <h2 class="section-title">Часто задаваемые вопросы</h2>
+        <div class="faq-list">
+            <div class="faq-item">
+                <button class="faq-question">Что такое VPN? <i class="fas fa-chevron-down"></i></button>
+                <div class="faq-answer"><p>VPN (Virtual Private Network) — технология, которая шифрует ваш интернет-трафик и направляет его через безопасный сервер. Это обеспечивает приватность и безопасность в интернете, а также позволяет обходить региональные блокировки.</p></div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-question">Какие устройства поддерживаются? <i class="fas fa-chevron-down"></i></button>
+                <div class="faq-answer"><p>Мы поддерживаем все популярные платформы: Windows, macOS, Linux, iOS и Android. Вы можете подключить до 5 устройств одновременно в зависимости от тарифа.</p></div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-question">Есть ли бесплатный пробный период? <i class="fas fa-chevron-down"></i></button>
+                <div class="faq-answer"><p>Да! Для новых пользователей мы предоставляем бесплатный пробный период. Вы можете протестировать сервис без привязки платежных данных.</p></div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-question">Какие способы оплаты доступны? <i class="fas fa-chevron-down"></i></button>
+                <div class="faq-answer"><p>Мы принимаем банковские карты (Visa, MasterCard, МИР), криптовалюту (BTC, USDT) и электронные кошельки. Все платежи защищены.</p></div>
+            </div>
+        </div>
+        <div class="faq-more"><a href="/faq" class="btn btn-outline">Все вопросы <i class="fas fa-arrow-right"></i></a></div>
+    </div>
+</section>
+
+<section class="cta reveal">
+    <div class="container">
+        <h2>Готовы попробовать?</h2>
+        <p>Подключите VPN за 2 минуты. Без платежных данных для тестового периода.</p>
+        <a href="https://app.cwim.ru" class="btn btn-primary btn-lg"><i class="fas fa-rocket"></i> Начать бесплатно</a>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const revealElements = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.1 });
+    revealElements.forEach(el => observer.observe(el));
+
+    document.querySelectorAll('.faq-question').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const item = this.parentElement;
+            const isOpen = item.classList.contains('active');
+            document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('active'));
+            if (!isOpen) item.classList.add('active');
+        });
+    });
+});
+</script>
+{% endblock %}

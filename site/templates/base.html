@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CWIM - Быстрый и безопасный VPN{% endblock %}</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔒</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div id="preloader">
+        <div class="loader">
+            <div class="loader-shield"></div>
+            <div class="loader-ring"></div>
+        </div>
+    </div>
+
+    <header class="header">
+        <div class="container">
+            <a href="/" class="logo">CWIM</a>
+            <nav class="nav">
+                <a href="/features">Возможности</a>
+                <a href="/pricing">Тарифы</a>
+                <a href="/faq">FAQ</a>
+                <a href="https://app.cwim.ru" class="btn btn-primary btn-sm">Войти</a>
+            </nav>
+            <button class="burger" aria-label="Меню">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </header>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <span class="logo">CWIM</span>
+                    <p class="footer-desc">Современный VPN-сервис с фокусом на скорость, безопасность и конфиденциальность ваших данных.</p>
+                    <div class="footer-social">
+                        <a href="#" aria-label="Telegram"><i class="fab fa-telegram"></i></a>
+                        <a href="#" aria-label="GitHub"><i class="fab fa-github"></i></a>
+                        <a href="mailto:support@cwim.ru" aria-label="Email"><i class="fas fa-envelope"></i></a>
+                    </div>
+                </div>
+                <div class="footer-links-group">
+                    <div class="footer-col">
+                        <h4>Продукт</h4>
+                        <a href="/features">Возможности</a>
+                        <a href="/pricing">Тарифы</a>
+                        <a href="https://app.cwim.ru">Личный кабинет</a>
+                    </div>
+                    <div class="footer-col">
+                        <h4>Поддержка</h4>
+                        <a href="/faq">FAQ</a>
+                        <a href="mailto:support@cwim.ru">Связаться с нами</a>
+                    </div>
+                    <div class="footer-col">
+                        <h4>Правовая</h4>
+                        <a href="#">Политика конфиденциальности</a>
+                        <a href="#">Условия использования</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 CWIM. Все права защищены.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        window.addEventListener('load', function() {
+            document.getElementById('preloader').classList.add('hidden');
+            setTimeout(() => document.getElementById('preloader').style.display = 'none', 500);
+        });
+
+        document.querySelector('.burger')?.addEventListener('click', function() {
+            document.querySelector('.nav').classList.toggle('open');
+            this.classList.toggle('active');
+        });
+    </script>
+</body>
+</html>

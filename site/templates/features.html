@@ -1,117 +1,106 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Возможности - CWIM</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-</head>
-<body>
-    <header class="header">
-        <div class="container">
-            <a href="/" class="logo">CWIM</a>
-            <nav class="nav">
-                <a href="/features">Возможности</a>
-                <a href="/pricing">Тарифы</a>
-                <a href="/faq">FAQ</a>
-                <a href="https://app.cwim.ru" class="btn btn-primary">Войти</a>
-            </nav>
-        </div>
-    </header>
+{% extends "base.html" %}
+{% block title %}Возможности — CWIM VPN{% endblock %}
+{% block content %}
 
-    <main>
-        <section class="page-hero">
-            <div class="container">
-                <h1>Возможности</h1>
-                <p>Всё что нужно для комфортной и безопасной работы в интернете</p>
-            </div>
-        </section>
+<section class="page-hero">
+    <div class="container">
+        <div class="section-label"><i class="fas fa-cubes"></i> Возможности</div>
+        <h1 class="page-title">Полный набор инструментов<br>для вашей безопасности</h1>
+    </div>
+</section>
 
-        <section class="features-detail">
-            <div class="container">
-                <div class="feature-block">
-                    <div class="feature-content">
-                        <h3>Протоколы XRay и VLESS</h3>
-                        <p>Используем современные протоколы, которые обеспечивают максимальную скорость и безопасность. Обход DPI и глубокой проверки пакетов.</p>
-                        <ul>
-                            <li>VLESS + Reality — никаких сертификатов</li>
-                            <li>VLESS + WS — обход через CDN</li>
-                            <li>Trojan — маскировка под HTTPS трафик</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="feature-block">
-                    <div class="feature-content">
-                        <h3>Серверы по всему миру</h3>
-                        <p>Множество локаций для стабильного и быстрого подключения. Выбирайте ближайший сервер для минимального пинга.</p>
-                    </div>
-                </div>
-
-                <div class="feature-block">
-                    <div class="feature-content">
-                        <h3>Мультиустройства</h3>
-                        <p>Подключайте до 5 устройств одновременно. Один аккаунт для всех ваших гаджетов.</p>
-                        <ul>
-                            <li>Windows, macOS, Linux</li>
-                            <li>iOS, Android</li>
-                            <li>Роутеры</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="feature-block">
-                    <div class="feature-content">
-                        <h3>Нулевые логи</h3>
-                        <p>Мы не храним ваши данные о трафике. Полная приватность и анонимность использования.</p>
-                    </div>
-                </div>
-
-                <div class="feature-block">
-                    <div class="feature-content">
-                        <h3>Автоматическое подключение</h3>
-                        <p>PWA-приложение работает как нативное приложение. Установите на рабочий стол и подключайтесь в один клик.</p>
-                    </div>
-                </div>
-
-                <div class="feature-block">
-                    <div class="feature-content">
-                        <h3>Поддержка 24/7</h3>
-                        <p>Наша команда всегда готова помочь с настройкой и решением любых вопросов.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="cta">
-            <div class="container">
-                <h2>Готовы попробовать?</h2>
-                <p>Подключите VPN прямо сейчас</p>
-                <a href="https://app.cwim.ru" class="btn btn-primary btn-lg">Начать бесплатно</a>
-            </div>
-        </section>
-    </main>
-
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-brand">
-                    <span class="logo">CWIM</span>
-                    <p>Быстрый и безопасный VPN сервис</p>
-                </div>
-                <div class="footer-links">
-                    <a href="/features">Возможности</a>
-                    <a href="/pricing">Тарифы</a>
-                    <a href="/faq">FAQ</a>
-                    <a href="mailto:support@cwim.ru">Поддержка</a>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; 2026 CWIM. Все права защищены.</p>
+<section class="features-detail reveal">
+    <div class="container">
+        <div class="feature-block reveal delay-1">
+            <div class="feature-block-icon"><i class="fas fa-bolt"></i></div>
+            <div class="feature-block-content">
+                <h3>Максимальная скорость</h3>
+                <p>Наши серверы расположены в дата-центрах с прямыми каналами связи. Мы используем протоколы с минимальным оверхедом, чтобы обеспечить максимальную пропускную способность.</p>
+                <ul>
+                    <li><i class="fas fa-check"></i> Серверы с аплинком от 1 Гбит/с</li>
+                    <li><i class="fas fa-check"></i> Поддержка TCP BBR для оптимизации</li>
+                    <li><i class="fas fa-check"></i> Минимальная задержка — от 5 мс</li>
+                </ul>
             </div>
         </div>
-    </footer>
-</body>
-</html>
+
+        <div class="feature-block reveal delay-2">
+            <div class="feature-block-icon"><i class="fas fa-shield"></i></div>
+            <div class="feature-block-content">
+                <h3>Безопасность и приватность</h3>
+                <p>Мы серьёзно относимся к безопасности пользователей. Все соединения шифруются с использованием AES-256 — стандарта шифрования, используемого правительственными организациями.</p>
+                <ul>
+                    <li><i class="fas fa-check"></i> Шифрование AES-256 + ChaCha20</li>
+                    <li><i class="fas fa-check"></i> Strict zero-logs политика</li>
+                    <li><i class="fas fa-check"></i> Защита от утечек DNS и WebRTC</li>
+                    <li><i class="fas fa-check"></i> Kill switch — отключение интернета при падении VPN</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="feature-block reveal delay-3">
+            <div class="feature-block-icon"><i class="fas fa-globe"></i></div>
+            <div class="feature-block-content">
+                <h3>Обход блокировок</h3>
+                <p>Благодаря современным протоколам, наш VPN успешно обходит глубокий анализ пакетов (DPI) и не отличается от обычного HTTPS-трафика.</p>
+                <ul>
+                    <li><i class="fas fa-check"></i> VLESS + Reality — маскировка под TLS</li>
+                    <li><i class="fas fa-check"></i> Trojan — имитация HTTPS сайта</li>
+                    <li><i class="fas fa-check"></i> WebSocket + TLS — обход через CDN</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="feature-block reveal delay-4">
+            <div class="feature-block-icon"><i class="fas fa-mobile-screen"></i></div>
+            <div class="feature-block-content">
+                <h3>Мультиплатформенность</h3>
+                <p>Используйте VPN на всех ваших устройствах. Подписка привязывается к аккаунту, а не к устройству.</p>
+                <ul>
+                    <li><i class="fas fa-check"></i> Windows — встроенный клиент</li>
+                    <li><i class="fas fa-check"></i> macOS — нативное приложение</li>
+                    <li><i class="fas fa-check"></i> iOS/Android — PWA приложение</li>
+                    <li><i class="fas fa-check"></i> Linux — CLI инструменты</li>
+                    <li><i class="fas fa-check"></i> Роутеры — OpenWrt, Keenetic и др.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="feature-block reveal delay-5">
+            <div class="feature-block-icon"><i class="fas fa-headset"></i></div>
+            <div class="feature-block-content">
+                <h3>Поддержка 24/7</h3>
+                <p>Наша команда поддержки всегда готова помочь. Отвечаем в среднем за 15 минут в рабочее время.</p>
+                <ul>
+                    <li><i class="fas fa-check"></i> Чат в приложении</li>
+                    <li><i class="fas fa-check"></i> Email поддержка</li>
+                    <li><i class="fas fa-check"></i> База знаний и инструкции</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="cta reveal">
+    <div class="container">
+        <h2>Готовы попробовать?</h2>
+        <p>Подключите VPN за 2 минуты</p>
+        <a href="https://app.cwim.ru" class="btn btn-primary btn-lg"><i class="fas fa-rocket"></i> Начать бесплатно</a>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const revealElements = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.1 });
+    revealElements.forEach(el => observer.observe(el));
+});
+</script>
+{% endblock %}

@@ -1,94 +1,125 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FAQ - CWIM</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-</head>
-<body>
-    <header class="header">
-        <div class="container">
-            <a href="/" class="logo">CWIM</a>
-            <nav class="nav">
-                <a href="/features">Возможности</a>
-                <a href="/pricing">Тарифы</a>
-                <a href="/faq">FAQ</a>
-                <a href="https://app.cwim.ru" class="btn btn-primary">Войти</a>
-            </nav>
+{% extends "base.html" %}
+{% block title %}FAQ — CWIM VPN{% endblock %}
+{% block content %}
+
+<section class="page-hero">
+    <div class="container">
+        <div class="section-label"><i class="fas fa-question-circle"></i> FAQ</div>
+        <h1 class="page-title">Часто задаваемые вопросы</h1>
+        <p class="page-subtitle">Ответы на самые популярные вопросы о нашем сервисе</p>
+    </div>
+</section>
+
+<section class="faq reveal">
+    <div class="container">
+        <div class="faq-search">
+            <i class="fas fa-search"></i>
+            <input type="text" id="faqSearch" placeholder="Поиск по вопросам...">
         </div>
-    </header>
 
-    <main>
-        <section class="page-hero">
-            <div class="container">
-                <h1>Часто задаваемые вопросы</h1>
-                <p>Ответы на популярные вопросы о нашем сервисе</p>
+        <div class="faq-categories">
+            <button class="faq-cat active" data-cat="all">Все</button>
+            <button class="faq-cat" data-cat="general">Общие</button>
+            <button class="faq-cat" data-cat="setup">Настройка</button>
+            <button class="faq-cat" data-cat="payment">Оплата</button>
+        </div>
+
+        <div class="faq-list" id="faqList">
+            <div class="faq-item" data-cat="general">
+                <button class="faq-question">Что такое VPN? <i class="fas fa-chevron-down"></i></button>
+                <div class="faq-answer"><p>VPN (Virtual Private Network) — это технология, которая создаёт зашифрованное соединение между вашим устройством и удалённым сервером. Весь ваш интернет-трафик проходит через этот защищённый туннель, что гарантирует приватность и позволяет обходить региональные блокировки.</p></div>
             </div>
-        </section>
-
-        <section class="faq">
-            <div class="container">
-                <div class="faq-list">
-                    <div class="faq-item">
-                        <h3>Что такое VPN?</h3>
-                        <p>VPN (Virtual Private Network) — технология, которая шифрует ваш интернет-трафик и направляет его через безопасный сервер. Это обеспечивает приватность и безопасность в интернете.</p>
-                    </div>
-
-                    <div class="faq-item">
-                        <h3>Какие устройства поддерживаются?</h3>
-                        <p>Мы поддерживаем все популярные платформы: Windows, macOS, Linux, iOS и Android. Также можно настроить подключение на роутере для защиты всех устройств в сети.</p>
-                    </div>
-
-                    <div class="faq-item">
-                        <h3>Как установить приложение?</h3>
-                        <p>Перейдите на app.cwim.ru, зарегистрируйтесь и следуйте инструкциям по установку. PWA-приложение можно установить на рабочий стол из браузера.</p>
-                    </div>
-
-                    <div class="faq-item">
-                        <h3>Какие способы оплаты доступны?</h3>
-                        <p>Мы принимаем банковские карты (Visa, MasterCard, МИР), криптовалюту (Bitcoin, USDT) и электронные кошельки.</p>
-                    </div>
-
-                    <div class="faq-item">
-                        <h3>Можно ли использовать на нескольких устройствах?</h3>
-                        <p>Да! В зависимости от тарифа, вы можете подключить от 1 до 5 устройств одновременно.</p>
-                    </div>
-
-                    <div class="faq-item">
-                        <h3>Есть ли пробный период?</h3>
-                        <p>Да, мы предоставляем бесплатный пробный период для новых пользователей. Зарегистрируйтесь и попробуйте сервис бесплатно.</p>
-                    </div>
-
-                    <div class="faq-item">
-                        <h3>Как связаться с поддержкой?</h3>
-                        <p>Вы можете написать нам на email support@cwim.ru или через форму обратной связи в приложении. Мы отвечаем в течение 24 часов.</p>
-                    </div>
-                </div>
+            <div class="faq-item" data-cat="general">
+                <button class="faq-question">Как CWIM защищает мои данные? <i class="fas fa-chevron-down"></i></button>
+                <div class="faq-answer"><p>Мы используем шифрование AES-256 для всех соединений. Наши серверы работают по строгой zero-logs политике — мы не храним историю подключений, IP-адреса или метаданные. Дополнительно реализована защита от утечек DNS и WebRTC.</p></div>
             </div>
-        </section>
-    </main>
-
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-brand">
-                    <span class="logo">CWIM</span>
-                    <p>Быстрый и безопасный VPN сервис</p>
-                </div>
-                <div class="footer-links">
-                    <a href="/features">Возможности</a>
-                    <a href="/pricing">Тарифы</a>
-                    <a href="/faq">FAQ</a>
-                    <a href="mailto:support@cwim.ru">Поддержка</a>
-                </div>
+            <div class="faq-item" data-cat="general">
+                <button class="faq-question">Какие протоколы вы поддерживаете? <i class="fas fa-chevron-down"></i></button>
+                <div class="faq-answer"><p>Мы поддерживаем VLESS + Reality, Trojan, и WebSocket + TLS. Каждый протокол имеет свои преимущества: VLESS максимально незаметен для DPI, Trojan имитирует HTTPS сайт, а WS + TLS идеален для обхода через CDN.</p></div>
             </div>
-            <div class="footer-bottom">
-                <p>&copy; 2026 CWIM. Все права защищены.</p>
+            <div class="faq-item" data-cat="setup">
+                <button class="faq-question">Как начать пользоваться? <i class="fas fa-chevron-down"></i></button>
+                <div class="faq-answer"><p>Всё очень просто: зарегистрируйтесь на app.cwim.ru, выберите тариф, оплатите удобным способом и скачайте конфигурацию для вашего устройства. Подробные инструкции есть в личном кабинете.</p></div>
+            </div>
+            <div class="faq-item" data-cat="setup">
+                <button class="faq-question">На каких устройствах работает? <i class="fas fa-chevron-down"></i></button>
+                <div class="faq-answer"><p>CWIM поддерживает все популярные платформы: Windows, macOS, Linux, iOS, Android. Также возможно подключение на роутерах с OpenWrt, Keenetic и другими прошивками.</p></div>
+            </div>
+            <div class="faq-item" data-cat="setup">
+                <button class="faq-question">Как установить приложение на телефон? <i class="fas fa-chevron-down"></i></button>
+                <div class="faq-answer"><p>Наше PWA-приложение работает без установки из магазина приложений. Просто откройте app.cwim.ru в браузере и добавьте на рабочий стол через меню «Поделиться» → «На экран домой».</p></div>
+            </div>
+            <div class="faq-item" data-cat="payment">
+                <button class="faq-question">Какие способы оплаты доступны? <i class="fas fa-chevron-down"></i></button>
+                <div class="faq-answer"><p>Мы принимаем банковские карты (Visa, MasterCard, МИР), криптовалюту (Bitcoin, USDT, ETH) и электронные кошельки. Все платежи обрабатываются через защищённые платёжные шлюзы.</p></div>
+            </div>
+            <div class="faq-item" data-cat="payment">
+                <button class="faq-question">Есть ли возврат средств? <i class="fas fa-chevron-down"></i></button>
+                <div class="faq-answer"><p>Да, мы предоставляем гарантию возврата средств в течение 7 дней с момента оплаты, если сервис вам не подошёл. Для этого напишите в поддержку.</p></div>
+            </div>
+            <div class="faq-item" data-cat="payment">
+                <button class="faq-question">Могу ли я продлить подписку досрочно? <i class="fas fa-chevron-down"></i></button>
+                <div class="faq-answer"><p>Да, дни суммируются. Если у вас осталось 15 дней подписки, и вы продлеваете на месяц, у вас будет 45 дней. Также доступно авто-продление.</p></div>
+            </div>
+            <div class="faq-item" data-cat="general">
+                <button class="faq-question">Что такое пробный период? <i class="fas fa-chevron-down"></i></button>
+                <div class="faq-answer"><p>Пробный период — это возможность бесплатно протестировать наш VPN. Вы получаете ограниченный доступ ко всем функциям на несколько дней. Никаких платёжных данных не требуется.</p></div>
             </div>
         </div>
-    </footer>
-</body>
-</html>
+    </div>
+</section>
+
+<section class="cta reveal">
+    <div class="container">
+        <h2>Не нашли ответ?</h2>
+        <p>Напишите нам — мы ответим в течение 15 минут</p>
+        <a href="mailto:support@cwim.ru" class="btn btn-primary btn-lg"><i class="fas fa-envelope"></i> Написать в поддержку</a>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const revealElements = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.1 });
+    revealElements.forEach(el => observer.observe(el));
+
+    // FAQ accordion
+    document.querySelectorAll('.faq-question').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const item = this.parentElement;
+            const isOpen = item.classList.contains('active');
+            document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('active'));
+            if (!isOpen) item.classList.add('active');
+        });
+    });
+
+    // FAQ search
+    document.getElementById('faqSearch')?.addEventListener('input', function() {
+        const query = this.value.toLowerCase();
+        document.querySelectorAll('.faq-item').forEach(item => {
+            const text = item.querySelector('.faq-question').textContent.toLowerCase();
+            item.style.display = text.includes(query) ? '' : 'none';
+        });
+    });
+
+    // FAQ categories
+    document.querySelectorAll('.faq-cat').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.faq-cat').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            const cat = this.dataset.cat;
+            document.querySelectorAll('.faq-item').forEach(item => {
+                item.style.display = cat === 'all' || item.dataset.cat === cat ? '' : 'none';
+            });
+        });
+    });
+});
+</script>
+{% endblock %}
