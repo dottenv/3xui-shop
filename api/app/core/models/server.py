@@ -35,6 +35,11 @@ class Server(Model):
     ssh_password = fields.CharField(max_length=255, default="")
     ssh_key = fields.TextField(default="")
 
+    config_public_key = fields.CharField(max_length=255, default="")
+    config_short_id = fields.CharField(max_length=50, default="")
+    config_sni = fields.CharField(max_length=255, default="")
+    config_flow = fields.CharField(max_length=50, default="xtls-rprx-vision")
+
     created_at = fields.DatetimeField(default=datetime.utcnow)
     updated_at = fields.DatetimeField(auto_now=True)
 

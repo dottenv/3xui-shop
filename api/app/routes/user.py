@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from typing import Optional
 from datetime import datetime, timezone
+from urllib.parse import quote
 
 from app.core.schemas import UserResponse, ProfileUpdate
 from app.core.models import User, Subscription, Server
@@ -76,6 +77,47 @@ async def get_subscriptions(user: User = Depends(get_current_user)):
         }
         for s in subs
     ]
+
+
+@router.get("/subscription/config")
+async def get_subscription_config(user: User = Depends(get_current_user)):
+    sub = await Subscription.filter(user_id=user.id, is_active=True).order_by("-expires_at").first()
+    if not sub:
+        return {"detail": "No active subscription"}
+
+    server = await Server.get_or_none(id=sub.server_id)
+    if not server:
+        return {"detail": "Server not found"}
+
+    host = server.host
+    port = server.sub_port or server.port or 443
+    uuid = sub.client_uuid
+    name = quote(f"{server.name} — CWIM")
+
+    links = []
+    if server.protocol == "vless":
+        params = f"type=tcp&security=reality&flow={server.config_flow}&pbk={server.config_public_key}&fp=chrome&sni={server.config_sni}&sid={server.config_short_id}"
+        vless = f"vless://{uuid}@{host}:{port}?{params}#{name}"
+        links.append({"protocol": "vless", "link": vless})
+    elif server.protocol == "trojan":
+        params = f"security=tls&sni={server.config_sni or host}&type=tcp"
+        trojan = f"trojan://{uuid}@{host}:{port}?{params}#{name}"
+        links.append({"protocol": "trojan", "link": trojan})
+    elif server.protocol == "shadowsocks":
+        # Simple shadowsocks link (just a placeholder)
+        ss = f"ss://{uuid}@{host}:{port}#{name}"
+        links.append({"protocol": "shadowsocks", "link": ss})
+    else:
+        links.append({"protocol": server.protocol, "link": f"{server.protocol}://{uuid}@{host}:{port}#{name}"})
+
+    return {
+        "server_name": server.name,
+        "host": host,
+        "port": port,
+        "protocol": server.protocol,
+        "client_uuid": uuid,
+        "links": links,
+    }
 
 
 @router.get("/servers")

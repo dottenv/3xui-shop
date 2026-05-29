@@ -269,6 +269,10 @@ async def get_servers(admin: Admin = Depends(get_current_admin)):
             "ssh_host": s.ssh_host,
             "ssh_port": s.ssh_port,
             "ssh_username": s.ssh_username,
+            "config_public_key": s.config_public_key,
+            "config_short_id": s.config_short_id,
+            "config_sni": s.config_sni,
+            "config_flow": s.config_flow,
         }
         for s in servers
     ]
@@ -294,6 +298,10 @@ class ServerCreateRequest(BaseModel):
     ssh_username: str = Field(default="")
     ssh_password: str = Field(default="")
     ssh_key: str = Field(default="")
+    config_public_key: str = Field(default="")
+    config_short_id: str = Field(default="")
+    config_sni: str = Field(default="")
+    config_flow: str = Field(default="xtls-rprx-vision")
 
 
 class ServerUpdateRequest(BaseModel):
@@ -319,6 +327,10 @@ class ServerUpdateRequest(BaseModel):
     ssh_username: Optional[str] = None
     ssh_password: Optional[str] = None
     ssh_key: Optional[str] = None
+    config_public_key: Optional[str] = None
+    config_short_id: Optional[str] = None
+    config_sni: Optional[str] = None
+    config_flow: Optional[str] = None
 
 
 @router.post("/servers")

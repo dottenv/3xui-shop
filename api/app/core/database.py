@@ -51,6 +51,10 @@ CREATE TABLE IF NOT EXISTS "servers" (
     "ssh_username" VARCHAR(100) NOT NULL DEFAULT '',
     "ssh_password" VARCHAR(255) NOT NULL DEFAULT '',
     "ssh_key" TEXT NOT NULL DEFAULT '',
+    "config_public_key" VARCHAR(255) NOT NULL DEFAULT '',
+    "config_short_id" VARCHAR(50) NOT NULL DEFAULT '',
+    "config_sni" VARCHAR(255) NOT NULL DEFAULT '',
+    "config_flow" VARCHAR(50) NOT NULL DEFAULT 'xtls-rprx-vision',
     "created_at" TIMESTAMP NOT NULL,
     "updated_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -270,6 +274,30 @@ async def run_migrations():
             print("[db] Applied migration: 007_servers_ssh_dedicated")
         else:
             print("[db] Migration 007_servers_ssh_dedicated: columns already present, skipped")
+
+    # Migration 008 — server VPN config fields
+    if "008_server_config" not in applied:
+        col_info = await conn.execute_query("PRAGMA table_info('servers')")
+        col_names = {r["name"] for r in col_info[1]}
+        cfg_cols = [
+            ("config_public_key", "VARCHAR(255) NOT NULL DEFAULT ''"),
+            ("config_short_id", "VARCHAR(50) NOT NULL DEFAULT ''"),
+            ("config_sni", "VARCHAR(255) NOT NULL DEFAULT ''"),
+            ("config_flow", "VARCHAR(50) NOT NULL DEFAULT 'xtls-rprx-vision'"),
+        ]
+        added = False
+        for col, col_type in cfg_cols:
+            if col not in col_names:
+                await conn.execute_query(f'ALTER TABLE "servers" ADD COLUMN "{col}" {col_type}')
+                added = True
+        await conn.execute_query(
+            f'INSERT OR IGNORE INTO "{SCHEMA_MIGRATIONS_TABLE}" ("name") VALUES (?)',
+            ["008_server_config"],
+        )
+        if added:
+            print("[db] Applied migration: 008_server_config")
+        else:
+            print("[db] Migration 008_server_config: columns already present, skipped")
 
     print("[db] Schema up to date.")
 
