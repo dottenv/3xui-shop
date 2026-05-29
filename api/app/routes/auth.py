@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
 from app.core.schemas import (
     RegisterRequest, LoginRequest, RefreshRequest,
-    TokenResponse, UserResponse,
+    ChangePasswordRequest, TokenResponse, UserResponse,
 )
 from app.core.security import (
     hash_password, verify_password,
@@ -58,3 +58,14 @@ async def refresh(body: RefreshRequest):
 @router.get("/me", response_model=UserResponse)
 async def get_me(user: User = Depends(get_current_user)):
     return user
+
+
+@router.post("/change-password")
+async def change_password(body: ChangePasswordRequest, user: User = Depends(get_current_user)):
+    if not verify_password(body.current_password, user.password_hash):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Неверный текущий пароль")
+    if body.new_password == body.current_password:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Новый пароль совпадает с текущим")
+    user.password_hash = hash_password(body.new_password)
+    await user.save()
+    return {"detail": "Пароль изменён"}

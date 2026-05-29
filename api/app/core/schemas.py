@@ -42,6 +42,11 @@ class ProfileUpdate(BaseModel):
     last_name: Optional[str] = Field(None, max_length=100)
 
 
+class ChangePasswordRequest(BaseModel):
+    current_password: str = Field(..., min_length=1)
+    new_password: str = Field(..., min_length=6, max_length=128)
+
+
 # --- Error ---
 class ErrorResponse(BaseModel):
     detail: str

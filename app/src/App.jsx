@@ -1,11 +1,15 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './AuthContext'
 import ProtectedRoute from './ProtectedRoute'
 import Layout from './Layout'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
-import Profile from './pages/Profile'
+import Settings from './pages/Settings'
+import SettingsPersonal from './pages/SettingsPersonal'
+import SettingsSecurity from './pages/SettingsSecurity'
+import SettingsLanguage from './pages/SettingsLanguage'
+import SettingsTheme from './pages/SettingsTheme'
 import Pricing from './pages/Pricing'
 import Servers from './pages/Servers'
 import History from './pages/History'
@@ -23,7 +27,12 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/" element={P(Dashboard)} />
-          <Route path="/profile" element={P(Profile)} />
+          <Route path="/settings" element={P(Settings)} />
+          <Route path="/settings/personal" element={P(SettingsPersonal)} />
+          <Route path="/settings/security" element={P(SettingsSecurity)} />
+          <Route path="/settings/language" element={P(SettingsLanguage)} />
+          <Route path="/settings/theme" element={P(SettingsTheme)} />
+          <Route path="/profile" element={<Navigate to="/settings" replace />} />
           <Route path="/pricing" element={P(Pricing)} />
           <Route path="/servers" element={P(Servers)} />
           <Route path="/history" element={P(History)} />

@@ -8,3 +8,10 @@
   --color-muted: #94a3b8;
   --color-bg: #0f172a;
 }
+
+[data-theme="light"] {
+  --color-surface: #ffffff;
+  --color-border: #e2e8f0;
+  --color-muted: #64748b;
+  --color-bg: #f8fafc;
+}
