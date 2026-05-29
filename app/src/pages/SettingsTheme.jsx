@@ -1,19 +1,15 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getTheme, setTheme } from '../theme'
-
-const themes = [
-  { id: 'dark', label: 'Тёмная', icon: 'M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z' },
-  { id: 'light', label: 'Светлая', icon: 'M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z' },
-]
+import { isGlass, setGlass } from '../theme'
 
 export default function SettingsTheme() {
   const navigate = useNavigate()
-  const [current, setCurrent] = useState(getTheme)
+  const [enabled, setEnabled] = useState(isGlass)
 
-  function select(id) {
-    setCurrent(id)
-    setTheme(id)
+  function toggle() {
+    const next = !enabled
+    setEnabled(next)
+    setGlass(next)
   }
 
   return (
@@ -25,29 +21,40 @@ export default function SettingsTheme() {
         Настройки
       </button>
 
-      <h1 className="text-xl font-bold">Тема</h1>
-      <p className="text-sm text-muted -mt-4">Выберите оформление приложения</p>
+      <h1 className="text-xl font-bold">Тема оформления</h1>
+      <p className="text-sm text-muted -mt-4">Тёмная тема — по умолчанию. Liquid Glass придаёт глубину и свечение.</p>
 
+      {/* Preview cards */}
       <div className="grid grid-cols-2 gap-3">
-        {themes.map((t) => (
-          <button key={t.id} onClick={() => select(t.id)}
-            className={`bg-surface border rounded-2xl p-5 text-center space-y-3 transition-all ${
-              current === t.id ? 'border-primary ring-1 ring-primary shadow-lg shadow-primary/10' : 'border-border hover:border-primary/50'
-            }`}>
-            <div className={`w-14 h-14 rounded-2xl mx-auto flex items-center justify-center ${
-              t.id === 'dark' ? 'bg-bg text-yellow-400' : 'bg-yellow-100 text-yellow-600'
-            }`}>
-              <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d={t.icon} />
-              </svg>
-            </div>
-            <p className="text-sm font-medium">{t.label}</p>
-            {current === t.id && <p className="text-[10px] text-primary font-medium">Активно</p>}
-          </button>
-        ))}
+        <div className={`bg-surface border rounded-2xl p-5 text-center space-y-3 transition-all ${
+          !enabled ? 'border-primary ring-1 ring-primary shadow-lg shadow-primary/10' : 'border-border'
+        }`}>
+          <div className="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center bg-bg">
+            <svg className="w-7 h-7 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+            </svg>
+          </div>
+          <p className="text-sm font-medium">Dark</p>
+          {!enabled && <p className="text-[10px] text-primary font-medium">Активно</p>}
+        </div>
+
+        <div className={`border rounded-2xl p-5 text-center space-y-3 transition-all ${
+          enabled ? 'border-primary ring-1 ring-primary shadow-lg shadow-primary/10' : 'border-border'
+        }`}
+          style={enabled ? { background: 'rgba(30,41,59,0.45)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' } : {}}>
+          <div className="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center"
+            style={{ background: 'linear-gradient(135deg, rgba(37,99,235,0.2), rgba(147,51,234,0.2))' }}>
+            <svg className="w-7 h-7 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8.288 15.038a5.25 5.25 0 017.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12.53 18.22l-.53.53-.53-.53a.75.75 0 011.06 0z" />
+            </svg>
+          </div>
+          <p className="text-sm font-medium">Liquid Glass</p>
+          {enabled && <p className="text-[10px] text-primary font-medium">Активно</p>}
+        </div>
       </div>
 
-      <div className="bg-surface border border-border rounded-2xl p-5">
+      {/* Toggle */}
+      <div className="bg-surface border border-border rounded-2xl p-5 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -55,10 +62,14 @@ export default function SettingsTheme() {
             </svg>
           </div>
           <div>
-            <p className="font-medium text-sm">Автоматически</p>
-            <p className="text-xs text-muted mt-0.5">Скоро — будет следовать системной теме</p>
+            <p className="font-medium text-sm">Liquid Glass</p>
+            <p className="text-xs text-muted mt-0.5">Стеклянные панели с размытием</p>
           </div>
         </div>
+        <button onClick={toggle}
+          className={`relative w-11 h-6 rounded-full transition-colors ${enabled ? 'bg-primary' : 'bg-border'}`}>
+          <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${enabled ? 'translate-x-5' : 'translate-x-0'}`} />
+        </button>
       </div>
     </div>
   )

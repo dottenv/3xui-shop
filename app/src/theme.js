@@ -1,16 +1,16 @@
-const THEME_KEY = 'cwim_theme'
+const GLASS_KEY = 'cwim_glass'
 
-export function getTheme() {
-  try { return localStorage.getItem(THEME_KEY) || 'dark' } catch { return 'dark' }
+export function isGlass() {
+  try { return localStorage.getItem(GLASS_KEY) === 'true' } catch { return false }
 }
 
-export function setTheme(theme) {
-  try { localStorage.setItem(THEME_KEY, theme) } catch {}
-  document.documentElement.setAttribute('data-theme', theme)
+export function setGlass(enabled) {
+  try { localStorage.setItem(GLASS_KEY, String(enabled)) } catch {}
+  document.documentElement.classList.toggle('glass', enabled)
 }
 
 export function applyTheme() {
-  const theme = getTheme()
-  document.documentElement.setAttribute('data-theme', theme)
-  return theme
+  const enabled = isGlass()
+  document.documentElement.classList.toggle('glass', enabled)
+  return enabled
 }
