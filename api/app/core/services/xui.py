@@ -80,6 +80,11 @@ class XuiService:
         api = await self._ensure_api()
         return await api.server.get_status()
 
+    async def clean_depleted(self, inbound_id: int) -> bool:
+        api = await self._ensure_api()
+        await api.client.delete_depleted(inbound_id)
+        return True
+
     async def test_connection(self) -> bool:
         try:
             await self._ensure_api()

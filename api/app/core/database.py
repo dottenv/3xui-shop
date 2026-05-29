@@ -45,6 +45,12 @@ CREATE TABLE IF NOT EXISTS "servers" (
     "xui_url" VARCHAR(255) NOT NULL DEFAULT '',
     "xui_username" VARCHAR(100) NOT NULL DEFAULT '',
     "xui_password" VARCHAR(255) NOT NULL DEFAULT '',
+    "is_dedicated" INT NOT NULL DEFAULT 0,
+    "ssh_host" VARCHAR(255) NOT NULL DEFAULT '',
+    "ssh_port" INT NOT NULL DEFAULT 22,
+    "ssh_username" VARCHAR(100) NOT NULL DEFAULT '',
+    "ssh_password" VARCHAR(255) NOT NULL DEFAULT '',
+    "ssh_key" TEXT NOT NULL DEFAULT '',
     "created_at" TIMESTAMP NOT NULL,
     "updated_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -187,9 +193,6 @@ CREATE TABLE IF NOT EXISTS "admins" (
         );
         CREATE INDEX IF NOT EXISTS "idx_sub_user" ON "subscriptions" ("user_id");
     """),
-    ("006_servers_xui", """
-        -- Add XUI connection columns to servers table if missing
-    """),
 ]
 
 
@@ -265,6 +268,36 @@ async def run_migrations():
                 ["006_servers_xui"],
             )
             print("[db] Applied migration: 006_servers_xui")
+
+    # Migration 007 — server SSH + dedicated fields
+    if "007_servers_ssh_dedicated" not in applied:
+        col_info = await conn.execute_query("PRAGMA table_info('servers')")
+        col_names = {r["name"] for r in col_info[1]}
+        sr_cols = [
+            ("is_dedicated", "INT NOT NULL DEFAULT 0"),
+            ("ssh_host", "VARCHAR(255) NOT NULL DEFAULT ''"),
+            ("ssh_port", "INT NOT NULL DEFAULT 22"),
+            ("ssh_username", "VARCHAR(100) NOT NULL DEFAULT ''"),
+            ("ssh_password", "VARCHAR(255) NOT NULL DEFAULT ''"),
+            ("ssh_key", "TEXT NOT NULL DEFAULT ''"),
+        ]
+        added = False
+        for col, col_type in sr_cols:
+            if col not in col_names:
+                await conn.execute_query(f'ALTER TABLE "servers" ADD COLUMN "{col}" {col_type}')
+                added = True
+        if not added:
+            await conn.execute_query(
+                f'INSERT INTO "{SCHEMA_MIGRATIONS_TABLE}" ("name") VALUES (?)',
+                ["007_servers_ssh_dedicated"],
+            )
+            print("[db] Migration 007_servers_ssh_dedicated: columns already present, skipped")
+        else:
+            await conn.execute_query(
+                f'INSERT INTO "{SCHEMA_MIGRATIONS_TABLE}" ("name") VALUES (?)',
+                ["007_servers_ssh_dedicated"],
+            )
+            print("[db] Applied migration: 007_servers_ssh_dedicated")
 
     print("[db] Schema up to date.")
 

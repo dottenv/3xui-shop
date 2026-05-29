@@ -7,7 +7,7 @@ from datetime import datetime
 
 router = APIRouter()
 
-ALLOWED_KEYS = {"maintenance_app", "lang"}
+ALLOWED_KEYS = {"maintenance_app", "lang", "maintenance_site"}
 
 
 class SettingUpdate(BaseModel):
@@ -33,7 +33,7 @@ async def update_settings(body: SettingUpdate, admin=Depends(get_current_admin))
             raise HTTPException(status_code=400, detail=f"Unknown setting: {key}")
         if key == "maintenance_app" and value not in ("0", "1"):
             raise HTTPException(status_code=400, detail=f"Invalid value for {key}: must be '0' or '1'")
-        if key == "lang" and value not in ("ru", "en"):
+        if key == "lang" and len(value) != 2:
             raise HTTPException(status_code=400, detail=f"Invalid lang: {value}")
         setting = await Setting.get_or_none(key=key)
         if setting:

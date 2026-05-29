@@ -15,10 +15,6 @@ class Settings(BaseSettings):
         "http://localhost:5173",
     ]
 
-    XUI_USERNAME: str = "admin"
-    XUI_PASSWORD: str = "password"
-    XUI_TOKEN: str = ""
-
     CRYPTOMUS_ENABLED: bool = False
     CRYPTOMUS_API_KEY: str = ""
     CRYPTOMUS_MERCHANT_UUID: str = ""

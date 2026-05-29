@@ -11,7 +11,6 @@ from app.core.security import (
 )
 from app.core.models import Admin, User, Server, Transaction, Subscription, IpWhitelist
 from app.core.services.xui import XuiService
-from app.core.config import settings
 
 router = APIRouter()
 admin_bearer = HTTPBearer(auto_error=False)
@@ -266,6 +265,10 @@ async def get_servers(admin: Admin = Depends(get_current_admin)):
             "protocol": s.protocol,
             "xui_url": s.xui_url,
             "xui_username": s.xui_username,
+            "is_dedicated": s.is_dedicated,
+            "ssh_host": s.ssh_host,
+            "ssh_port": s.ssh_port,
+            "ssh_username": s.ssh_username,
         }
         for s in servers
     ]
@@ -285,6 +288,12 @@ class ServerCreateRequest(BaseModel):
     xui_url: str = Field(default="")
     xui_username: str = Field(default="")
     xui_password: str = Field(default="")
+    is_dedicated: bool = Field(default=False)
+    ssh_host: str = Field(default="")
+    ssh_port: int = Field(default=22)
+    ssh_username: str = Field(default="")
+    ssh_password: str = Field(default="")
+    ssh_key: str = Field(default="")
 
 
 class ServerUpdateRequest(BaseModel):
@@ -304,6 +313,12 @@ class ServerUpdateRequest(BaseModel):
     xui_url: Optional[str] = None
     xui_username: Optional[str] = None
     xui_password: Optional[str] = None
+    is_dedicated: Optional[bool] = None
+    ssh_host: Optional[str] = None
+    ssh_port: Optional[int] = None
+    ssh_username: Optional[str] = None
+    ssh_password: Optional[str] = None
+    ssh_key: Optional[str] = None
 
 
 @router.post("/servers")
@@ -341,8 +356,8 @@ async def test_server_connection(server_id: int, admin: Admin = Depends(get_curr
         raise HTTPException(status_code=404, detail="Server not found")
     xui = XuiService(
         host=server.xui_url or server.host,
-        username=server.xui_username or settings.XUI_USERNAME,
-        password=server.xui_password or settings.XUI_PASSWORD,
+        username=server.xui_username,
+        password=server.xui_password,
     )
     try:
         ok = await xui.test_connection()
@@ -351,6 +366,7 @@ async def test_server_connection(server_id: int, admin: Admin = Depends(get_curr
         return {"success": False, "message": str(e)}
     finally:
         await xui.close()
+
 
 
 @router.get("/subscriptions")
@@ -382,8 +398,8 @@ async def revoke_subscription(sub_id: int, admin: Admin = Depends(get_current_ad
             try:
                 xui = XuiService(
                     host=server.xui_url or server.host,
-                    username=server.xui_username or settings.XUI_USERNAME,
-                    password=server.xui_password or settings.XUI_PASSWORD,
+                    username=server.xui_username,
+                    password=server.xui_password,
                 )
                 await xui.delete_client(server.inbound_id, sub.client_uuid)
                 await xui.close()
@@ -392,6 +408,50 @@ async def revoke_subscription(sub_id: int, admin: Admin = Depends(get_current_ad
     sub.is_active = False
     await sub.save()
     return {"detail": "Subscription revoked"}
+
+
+@router.post("/servers/{server_id}/clean-depleted")
+async def clean_depleted(server_id: int, admin: Admin = Depends(get_current_admin)):
+    server = await Server.get_or_none(id=server_id)
+    if not server:
+        raise HTTPException(status_code=404, detail="Server not found")
+    xui = XuiService(
+        host=server.xui_url or server.host,
+        username=server.xui_username,
+        password=server.xui_password,
+    )
+    try:
+        await xui.clean_depleted(server.inbound_id)
+        return {"detail": "Depleted clients cleaned"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        await xui.close()
+
+
+@router.post("/servers/{server_id}/install-speedtest")
+async def install_speedtest(server_id: int, admin: Admin = Depends(get_current_admin)):
+    server = await Server.get_or_none(id=server_id)
+    if not server:
+        raise HTTPException(status_code=404, detail="Server not found")
+    if not server.ssh_host:
+        raise HTTPException(status_code=400, detail="SSH not configured for this server")
+    try:
+        import asyncssh
+        async with asyncssh.connect(
+            host=server.ssh_host,
+            port=server.ssh_port or 22,
+            username=server.ssh_username,
+            password=server.ssh_password or None,
+            client_keys=[server.ssh_key] if server.ssh_key else None,
+            known_hosts=None,
+        ) as ssh:
+            result = await ssh.run("curl -s https://raw.githubusercontent.com/sivel/speedtest-cli/master/speedtest.py | python3 -")
+            return {"detail": "Speedtest installed", "output": result.stdout}
+    except ImportError:
+        raise HTTPException(status_code=500, detail="asyncssh not installed. Run: pip install asyncssh")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/transactions")

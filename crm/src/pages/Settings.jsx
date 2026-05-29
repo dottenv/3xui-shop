@@ -1,9 +1,15 @@
 import { useEffect, useState } from 'react'
-import { Typography, Switch, Select, message, Spin } from 'antd'
 import {
-  SettingOutlined, GlobalOutlined, MobileOutlined,
+  Typography, Switch, Select, message, Spin, Tabs, Table, Button, Modal,
+  Form, Input, InputNumber, Tag, Space, Popconfirm,
+} from 'antd'
+import {
+  SettingOutlined, GlobalOutlined, MobileOutlined, LockOutlined,
+  PlusOutlined, DeleteOutlined, ReloadOutlined, ApiOutlined,
+  CloudServerOutlined, KeyOutlined, ToolOutlined,
+  CloudOutlined, FlagOutlined, NodeIndexOutlined,
 } from '@ant-design/icons'
-import api from '../api'
+import api, { apiJson } from '../api'
 
 const { Title, Text } = Typography
 
@@ -12,8 +18,10 @@ export default function Settings() {
   const [langs, setLangs] = useState(['ru'])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(null)
+  const [tab, setTab] = useState('system')
 
   useEffect(() => {
+    setLoading(true)
     Promise.all([
       api.get('/admin/settings'),
       api.get('/public/langs'),
@@ -44,70 +52,557 @@ export default function Settings() {
     try {
       await api.put('/admin/settings', { lang: value })
       setSettings(prev => ({ ...prev, lang: value }))
-      message.success('Сохранено')
+      message.success('Язык сохранён')
     } catch {
       message.error('Ошибка')
     }
   }
 
+  const tabItems = [
+    { key: 'system', label: <span><SettingOutlined /> Системные</span>, children: <SystemTab settings={settings} langs={langs} saving={saving} toggle={toggle} saveLang={saveLang} /> },
+    { key: 'nodes', label: <span><CloudServerOutlined /> Ноды</span>, children: <NodesTab /> },
+    { key: 'ssh', label: <span><ToolOutlined /> SSH</span>, children: <SshTab /> },
+    { key: 'logic', label: <span><NodeIndexOutlined /> Логика</span>, children: <LogicTab /> },
+    { key: 'appearance', label: <span><FlagOutlined /> Оформление</span>, children: <AppearanceTab /> },
+  ]
+
   if (loading) return <Spin style={{ display: 'block', margin: '80px auto' }} />
 
   return (
-    <div style={{ maxWidth: 720, margin: '0 auto' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 32 }}>
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
         <div style={{ width: 40, height: 40, background: 'linear-gradient(135deg, #667eea, #764ba2)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, color: '#fff' }}>
           <SettingOutlined />
         </div>
         <div>
           <Title level={4} style={{ margin: 0 }}>Настройки системы</Title>
-          <Text type="secondary" style={{ fontSize: 13 }}>Управление конфигурацией сервиса</Text>
+          <Text type="secondary" style={{ fontSize: 13 }}>Управление серверами, нодами и конфигурацией</Text>
         </div>
       </div>
 
       <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e8e8e8', overflow: 'hidden' }}>
-        <div style={{ padding: '20px 24px', borderBottom: '1px solid #f0f0f0' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <GlobalOutlined style={{ color: '#8b5cf6' }} />
-            <Text strong style={{ fontSize: 15 }}>Общие</Text>
-          </div>
-        </div>
+        <Tabs activeKey={tab} onChange={setTab} items={tabItems} style={{ padding: '0 24px' }} />
+      </div>
+    </div>
+  )
+}
 
-        <div style={{ padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div>
-            <Text strong>Язык по умолчанию</Text>
-            <br />
-            <Text type="secondary" style={{ fontSize: 13 }}>Язык интерфейса для новых пользователей приложения</Text>
-          </div>
-          <Select
-            value={settings?.lang || 'ru'}
-            onChange={saveLang}
-            style={{ width: 160 }}
-            options={langs.map(l => ({ value: l, label: l === 'ru' ? 'Русский' : l === 'en' ? 'English' : l }))}
-          />
+// ─── System Tab ───────────────────────────────────────────────────────────
+function SystemTab({ settings, langs, saving, toggle, saveLang }) {
+  return (
+    <div style={{ maxWidth: 720 }}>
+      {/* Language */}
+      <div style={{ padding: '20px 0', borderBottom: '1px solid #f0f0f0' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+          <GlobalOutlined style={{ color: '#8b5cf6' }} />
+          <Text strong>Язык по умолчанию</Text>
         </div>
+        <Text type="secondary" style={{ fontSize: 13, display: 'block', marginBottom: 12 }}>
+          Язык интерфейса для сайта и приложения для новых пользователей
+        </Text>
+        <Select
+          value={settings?.lang || 'ru'}
+          onChange={saveLang}
+          style={{ width: 200 }}
+          options={langs.map(l => ({ value: l, label: l === 'ru' ? 'Русский' : l === 'en' ? 'English' : l }))}
+        />
       </div>
 
-      <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e8e8e8', overflow: 'hidden', marginTop: 16 }}>
-        <div style={{ padding: '20px 24px', borderBottom: '1px solid #f0f0f0' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      {/* Maintenance App */}
+      <div style={{ padding: '20px 0', borderBottom: '1px solid #f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
             <MobileOutlined style={{ color: '#059669' }} />
-            <Text strong style={{ fontSize: 15 }}>Приложение (app.cwim.ru)</Text>
+            <Text strong>Режим обслуживания (app.cwim.ru)</Text>
           </div>
+          <Text type="secondary" style={{ fontSize: 13 }}>При включении приложение показывает заглушку</Text>
         </div>
-
-        <div style={{ padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div>
-            <Text strong>Режим обслуживания</Text>
-            <br />
-            <Text type="secondary" style={{ fontSize: 13 }}>При включении приложение показывает заглушку и перестаёт работать</Text>
-          </div>
-          <Switch
-            checked={settings?.maintenance_app === '1'}
-            onChange={() => toggle('maintenance_app')}
-            loading={saving === 'maintenance_app'}
-          />
-        </div>
+        <Switch
+          checked={settings?.maintenance_app === '1'}
+          onChange={() => toggle('maintenance_app')}
+          loading={saving === 'maintenance_app'}
+        />
       </div>
+
+      {/* Maintenance Site */}
+      <div style={{ padding: '20px 0', borderBottom: '1px solid #f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+            <GlobalOutlined style={{ color: '#d97706' }} />
+            <Text strong>Режим обслуживания (vpn.cwim.ru)</Text>
+          </div>
+          <Text type="secondary" style={{ fontSize: 13 }}>При включении сайт показывает заглушку</Text>
+        </div>
+        <Switch
+          checked={settings?.maintenance_site === '1'}
+          onChange={() => toggle('maintenance_site')}
+          loading={saving === 'maintenance_site'}
+        />
+      </div>
+
+      {/* IP Whitelist */}
+      <div style={{ padding: '20px 0' }}>
+        <IpWhitelistSection />
+      </div>
+    </div>
+  )
+}
+
+// ─── IP Whitelist (inline) ────────────────────────────────────────────────
+function IpWhitelistSection() {
+  const [list, setList] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [addOpen, setAddOpen] = useState(false)
+  const [newIp, setNewIp] = useState('')
+  const [newComment, setNewComment] = useState('')
+
+  const load = () => {
+    setLoading(true)
+    api.get('/admin/whitelist').then(({ data }) => setList(data)).finally(() => setLoading(false))
+  }
+  useEffect(() => { load() }, [])
+
+  async function handleAdd() {
+    if (!newIp.trim()) return message.warning('Введите IP-адрес')
+    try {
+      await api.post('/admin/whitelist', { ip_address: newIp.trim(), comment: newComment.trim() || null })
+      message.success('IP добавлен')
+      setAddOpen(false)
+      setNewIp(''); setNewComment('')
+      load()
+    } catch (err) {
+      message.error(err.response?.data?.detail || 'Ошибка')
+    }
+  }
+
+  async function handleDelete(id) {
+    try {
+      await api.delete(`/admin/whitelist/${id}`)
+      message.success('Удалён')
+      load()
+    } catch { message.error('Ошибка') }
+  }
+
+  const columns = [
+    { title: 'IP-адрес', dataIndex: 'ip_address', width: 160 },
+    { title: 'Комментарий', dataIndex: 'comment', render: (v) => v || <Text type="secondary">—</Text> },
+    { title: 'Статус', dataIndex: 'is_active', width: 90, render: (v) => <Tag color={v ? 'green' : 'red'}>{v ? 'Активен' : 'Выкл'}</Tag> },
+    { title: 'Дата', dataIndex: 'created_at', width: 150, render: (v) => v ? new Date(v).toLocaleDateString() : '—' },
+    {
+      title: '', key: 'actions', width: 50,
+      render: (_, r) => (
+        <Popconfirm title="Удалить IP?" onConfirm={() => handleDelete(r.id)} okText="Да" cancelText="Нет">
+          <Button type="text" danger icon={<DeleteOutlined />} size="small" />
+        </Popconfirm>
+      ),
+    },
+  ]
+
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <LockOutlined style={{ color: '#8b5cf6' }} />
+          <Text strong>IP Whitelist</Text>
+        </div>
+        <Button size="small" type="primary" icon={<PlusOutlined />} onClick={() => setAddOpen(true)}>
+          Добавить IP
+        </Button>
+      </div>
+      <Table dataSource={list} columns={columns} rowKey="id" loading={loading} size="small" pagination={false} />
+      <Modal title="Добавить IP-адрес" open={addOpen} onCancel={() => { setAddOpen(false); setNewIp(''); setNewComment('') }}
+        onOk={handleAdd} okText="Добавить" cancelText="Отмена" destroyOnClose>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 }}>
+          <div>
+            <Text strong style={{ fontSize: 13, display: 'block', marginBottom: 4 }}>IP-адрес</Text>
+            <Input placeholder="8.8.8.8" value={newIp} onChange={(e) => setNewIp(e.target.value)} />
+          </div>
+          <div>
+            <Text strong style={{ fontSize: 13, display: 'block', marginBottom: 4 }}>Комментарий</Text>
+            <Input placeholder="Офис / Сервер / Разработчик" value={newComment} onChange={(e) => setNewComment(e.target.value)} />
+          </div>
+        </div>
+      </Modal>
+    </div>
+  )
+}
+
+// ─── Nodes Tab ────────────────────────────────────────────────────────────
+function NodesTab() {
+  const [servers, setServers] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editing, setEditing] = useState(null)
+  const [testing, setTesting] = useState(null)
+  const [cleaning, setCleaning] = useState(null)
+  const [form] = Form.useForm()
+
+  async function fetch() {
+    setLoading(true)
+    try {
+      const data = await apiJson('/admin/servers')
+      setServers(data)
+    } catch (err) { message.error(err.message) } finally { setLoading(false) }
+  }
+  useEffect(() => { fetch() }, [])
+
+  function openCreate() { setEditing(null); form.resetFields(); setModalOpen(true) }
+  function openEdit(r) { setEditing(r); form.setFieldsValue(r); setModalOpen(true) }
+
+  async function handleSave() {
+    const values = await form.validateFields()
+    try {
+      if (editing) {
+        await apiJson(`/admin/servers/${editing.id}`, { method: 'PUT', body: JSON.stringify(values) })
+        message.success('Сервер обновлён')
+      } else {
+        await apiJson('/admin/servers', { method: 'POST', body: JSON.stringify(values) })
+        message.success('Сервер создан')
+      }
+      setModalOpen(false)
+      fetch()
+    } catch (err) { message.error(err.message) }
+  }
+
+  async function handleDelete(id) {
+    Modal.confirm({
+      title: 'Удалить сервер?', content: 'Это действие необратимо.', okText: 'Удалить', okType: 'danger', cancelText: 'Отмена',
+      onOk: async () => {
+        try { await apiJson(`/admin/servers/${id}`, { method: 'DELETE' }); message.success('Сервер удалён'); fetch() }
+        catch (err) { message.error(err.message) }
+      },
+    })
+  }
+
+  async function handleTest(id) {
+    setTesting(id)
+    try {
+      const r = await apiJson(`/admin/servers/${id}/test`)
+      if (r.success) message.success(r.message || 'Подключение успешно')
+      else message.error(r.message || 'Ошибка подключения')
+    } catch (err) { message.error(err.message) } finally { setTesting(null) }
+  }
+
+  async function handleClean(id) {
+    setCleaning(id)
+    try {
+      await apiJson(`/admin/servers/${id}/clean-depleted`, { method: 'POST' })
+      message.success('Неактивные клиенты удалены')
+    } catch (err) { message.error(err.message) } finally { setCleaning(null) }
+  }
+
+  const columns = [
+    { title: 'ID', dataIndex: 'id', key: 'id', width: 50 },
+    { title: 'Название', dataIndex: 'name', key: 'name', width: 140, render: (v, r) => <>{r.flag || ''} {v}</> },
+    { title: 'Хост', dataIndex: 'host', key: 'host', width: 140 },
+    { title: 'XUI URL', dataIndex: 'xui_url', key: 'xui_url', width: 140, ellipsis: true },
+    { title: 'Login', dataIndex: 'xui_username', key: 'xui_username', width: 100 },
+    { title: 'Inbound', dataIndex: 'inbound_id', key: 'inbound_id', width: 70 },
+    { title: 'Протокол', dataIndex: 'protocol', key: 'protocol', width: 90 },
+    {
+      title: 'Статус', key: 'status', width: 100,
+      render: (_, r) => <><Tag color={r.is_active ? 'green' : 'red'}>{r.is_active ? 'Активен' : 'Нет'}</Tag></>,
+    },
+    {
+      title: 'Действия', key: 'actions', width: 250,
+      render: (_, r) => (
+        <Space size="small" wrap>
+          <Button size="small" icon={<ApiOutlined />} loading={testing === r.id} onClick={() => handleTest(r.id)}>Test</Button>
+          <Button size="small" loading={cleaning === r.id} onClick={() => handleClean(r.id)}>Clean</Button>
+          <Button size="small" onClick={() => openEdit(r)}>Ред.</Button>
+          <Button size="small" danger onClick={() => handleDelete(r.id)}>Уд.</Button>
+        </Space>
+      ),
+    },
+  ]
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, marginTop: 8 }}>
+        <Text>Управление XUI нодами: добавление, тестирование, очистка неактивных клиентов</Text>
+        <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>Добавить ноду</Button>
+      </div>
+      <Table dataSource={servers} columns={columns} rowKey="id" loading={loading} size="small" pagination={false} scroll={{ x: 1000 }} />
+
+      <Modal title={editing ? 'Редактировать ноду' : 'Новая нода'} open={modalOpen} onCancel={() => setModalOpen(false)}
+        onOk={handleSave} okText={editing ? 'Сохранить' : 'Создать'} cancelText="Отмена" width={640}>
+        <Form form={form} layout="vertical" style={{ marginTop: 12 }}>
+          <Form.Item name="name" label="Название" rules={[{ required: true }]}>
+            <Input placeholder="Netherlands-01" />
+          </Form.Item>
+          <Form.Item name="host" label="Хост (IP или домен)" rules={[{ required: true }]}>
+            <Input placeholder="192.168.1.1" />
+          </Form.Item>
+          <Space style={{ width: '100%' }} size={16}>
+            <Form.Item name="port" label="Порт панели" initialValue={443}>
+              <InputNumber min={1} max={65535} />
+            </Form.Item>
+            <Form.Item name="sub_port" label="Sub Port" initialValue={2096}>
+              <InputNumber min={1} max={65535} />
+            </Form.Item>
+            <Form.Item name="inbound_id" label="Inbound ID" initialValue={1}>
+              <InputNumber min={1} />
+            </Form.Item>
+          </Space>
+          <Space style={{ width: '100%' }} size={16}>
+            <Form.Item name="location" label="Локация">
+              <Input placeholder="Amsterdam" />
+            </Form.Item>
+            <Form.Item name="country" label="Страна (ISO2)">
+              <Input placeholder="NL" maxLength={2} />
+            </Form.Item>
+            <Form.Item name="flag" label="Флаг">
+              <Input placeholder="🇳🇱" />
+            </Form.Item>
+          </Space>
+          <Form.Item name="protocol" label="Протокол" initialValue="vless">
+            <Select>
+              <Select.Option value="vless">VLESS</Select.Option>
+              <Select.Option value="trojan">Trojan</Select.Option>
+              <Select.Option value="shadowsocks">Shadowsocks</Select.Option>
+            </Select>
+          </Form.Item>
+          <div style={{ background: '#fafafa', padding: 12, borderRadius: 8, marginBottom: 16 }}>
+            <Text strong style={{ fontSize: 13, display: 'block', marginBottom: 8, color: '#8b5cf6' }}>
+              <CloudOutlined /> Подключение к XUI панели
+            </Text>
+            <Form.Item name="xui_url" label="XUI URL (если отличается от host)" help="Напр. https://xui.example.com:443">
+              <Input placeholder="Оставьте пустым если host = xui_url" />
+            </Form.Item>
+            <Space style={{ width: '100%' }} size={16}>
+              <Form.Item name="xui_username" label="XUI Username" style={{ flex: 1 }}>
+                <Input placeholder="admin" />
+              </Form.Item>
+              <Form.Item name="xui_password" label="XUI Password" style={{ flex: 1 }}>
+                <Input.Password placeholder="Пароль" />
+              </Form.Item>
+            </Space>
+          </div>
+        </Form>
+      </Modal>
+    </div>
+  )
+}
+
+// ─── SSH Tab ──────────────────────────────────────────────────────────────
+function SshTab() {
+  const [servers, setServers] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [editing, setEditing] = useState(null)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [installing, setInstalling] = useState(null)
+  const [form] = Form.useForm()
+
+  async function fetch() {
+    setLoading(true)
+    try { setServers(await apiJson('/admin/servers')) } catch (err) { message.error(err.message) } finally { setLoading(false) }
+  }
+  useEffect(() => { fetch() }, [])
+
+  function openEdit(r) { setEditing(r); form.setFieldsValue(r); setModalOpen(true) }
+
+  async function handleSave() {
+    const values = await form.validateFields()
+    try {
+      await apiJson(`/admin/servers/${editing.id}`, { method: 'PUT', body: JSON.stringify(values) })
+      message.success('SSH настройки сохранены')
+      setModalOpen(false)
+      fetch()
+    } catch (err) { message.error(err.message) }
+  }
+
+  async function installSpeedtest(id) {
+    setInstalling(id)
+    try {
+      const r = await apiJson(`/admin/servers/${id}/install-speedtest`, { method: 'POST' })
+      message.success('Speedtest установлен')
+      Modal.info({ title: 'Результат', content: <pre style={{ fontSize: 12, maxHeight: 300, overflow: 'auto' }}>{r.output || 'OK'}</pre> })
+    } catch (err) { message.error(err.message) } finally { setInstalling(null) }
+  }
+
+  const columns = [
+    { title: 'Сервер', dataIndex: 'name', key: 'name' },
+    { title: 'SSH Host', dataIndex: 'ssh_host', key: 'ssh_host', render: (v) => v || <Text type="secondary">—</Text> },
+    { title: 'Порт', dataIndex: 'ssh_port', key: 'ssh_port', width: 70 },
+    { title: 'User', dataIndex: 'ssh_username', key: 'ssh_username', width: 100, render: (v) => v || <Text type="secondary">—</Text> },
+    {
+      title: 'Статус', key: 'status', width: 100,
+      render: (_, r) => r.ssh_host ? <Tag color="green">Настроен</Tag> : <Tag>Не настроен</Tag>,
+    },
+    {
+      title: 'Speedtest', key: 'speedtest', width: 140,
+      render: (_, r) => (
+        <Button size="small" disabled={!r.ssh_host} loading={installing === r.id} onClick={() => installSpeedtest(r.id)}>
+          Установить
+        </Button>
+      ),
+    },
+    {
+      title: 'Действия', key: 'actions', width: 80,
+      render: (_, r) => <Button size="small" onClick={() => openEdit(r)}>Настроить</Button>,
+    },
+  ]
+
+  return (
+    <div>
+      <div style={{ marginTop: 8, marginBottom: 16 }}>
+        <Text>Настройка SSH доступа для установки speedtest-cli и диагностики</Text>
+      </div>
+      <Table dataSource={servers} columns={columns} rowKey="id" loading={loading} size="small" pagination={false} />
+
+      <Modal title={`SSH — ${editing?.name || ''}`} open={modalOpen} onCancel={() => setModalOpen(false)}
+        onOk={handleSave} okText="Сохранить" cancelText="Отмена" width={520}>
+        <Form form={form} layout="vertical" style={{ marginTop: 12 }}>
+          <Space style={{ width: '100%' }} size={16}>
+            <Form.Item name="ssh_host" label="SSH Host" style={{ flex: 1 }}>
+              <Input placeholder="IP или домен" />
+            </Form.Item>
+            <Form.Item name="ssh_port" label="SSH Port" initialValue={22}>
+              <InputNumber min={1} max={65535} />
+            </Form.Item>
+          </Space>
+          <Space style={{ width: '100%' }} size={16}>
+            <Form.Item name="ssh_username" label="SSH Username" style={{ flex: 1 }}>
+              <Input placeholder="root" />
+            </Form.Item>
+            <Form.Item name="ssh_password" label="SSH Password" style={{ flex: 1 }}>
+              <Input.Password placeholder="Пароль" />
+            </Form.Item>
+          </Space>
+          <Form.Item name="ssh_key" label="SSH Private Key (опционально)">
+            <Input.TextArea rows={4} placeholder="-----BEGIN OPENSSH PRIVATE KEY-----\n..." />
+          </Form.Item>
+        </Form>
+      </Modal>
+    </div>
+  )
+}
+
+// ─── Logic Tab ────────────────────────────────────────────────────────────
+function LogicTab() {
+  const [servers, setServers] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [toggling, setToggling] = useState(null)
+
+  async function fetch() {
+    setLoading(true)
+    try { setServers(await apiJson('/admin/servers')) } catch (err) { message.error(err.message) } finally { setLoading(false) }
+  }
+  useEffect(() => { fetch() }, [])
+
+  async function toggleDedicated(id, current) {
+    setToggling(id)
+    try {
+      await apiJson(`/admin/servers/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ is_dedicated: !current }),
+      })
+      message.success('Обновлено')
+      fetch()
+    } catch (err) { message.error(err.message) } finally { setToggling(null) }
+  }
+
+  const columns = [
+    { title: 'Сервер', dataIndex: 'name', key: 'name', render: (v, r) => <>{r.flag || ''} {v}</> },
+    { title: 'Хост', dataIndex: 'host', key: 'host' },
+    {
+      title: 'Тип', key: 'type', width: 160,
+      render: (_, r) => (
+        <Tag color={r.is_dedicated ? 'purple' : 'blue'}>{r.is_dedicated ? 'Выделенный' : 'Общий'}</Tag>
+      ),
+    },
+    {
+      title: 'Действие', key: 'action', width: 200,
+      render: (_, r) => (
+        <Button
+          size="small"
+          loading={toggling === r.id}
+          onClick={() => toggleDedicated(r.id, r.is_dedicated)}
+        >
+          {r.is_dedicated ? 'Сделать общим' : 'Сделать выделенным'}
+        </Button>
+      ),
+    },
+  ]
+
+  return (
+    <div>
+      <div style={{ marginTop: 8, marginBottom: 16 }}>
+        <Text>
+          <strong>Общий сервер</strong> — клиенты подключаются к мультиподписке (sub.cwim.ru).<br />
+          <strong>Выделенный сервер</strong> — исключается из мультиподписки, используется для персональных серверов клиентов.
+        </Text>
+      </div>
+      <Table dataSource={servers} columns={columns} rowKey="id" loading={loading} size="small" pagination={false} />
+    </div>
+  )
+}
+
+// ─── Appearance Tab ──────────────────────────────────────────────────────
+function AppearanceTab() {
+  const [servers, setServers] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [form] = Form.useForm()
+  const [editing, setEditing] = useState(null)
+  const [modalOpen, setModalOpen] = useState(false)
+
+  async function fetch() {
+    setLoading(true)
+    try { setServers(await apiJson('/admin/servers')) } catch (err) { message.error(err.message) } finally { setLoading(false) }
+  }
+  useEffect(() => { fetch() }, [])
+
+  function openEdit(r) { setEditing(r); form.setFieldsValue(r); setModalOpen(true) }
+
+  async function handleSave() {
+    const values = await form.validateFields()
+    try {
+      await apiJson(`/admin/servers/${editing.id}`, { method: 'PUT', body: JSON.stringify(values) })
+      message.success('Оформление сохранено')
+      setModalOpen(false)
+      fetch()
+    } catch (err) { message.error(err.message) }
+  }
+
+  const columns = [
+    { title: 'ID', dataIndex: 'id', key: 'id', width: 50 },
+    { title: 'Флаг', dataIndex: 'flag', key: 'flag', width: 60, render: (v) => <span style={{ fontSize: 20 }}>{v || '🌐'}</span> },
+    { title: 'Название', dataIndex: 'name', key: 'name' },
+    { title: 'Локация', dataIndex: 'location', key: 'location', render: (v) => v || <Text type="secondary">—</Text> },
+    { title: 'Страна', dataIndex: 'country', key: 'country', width: 80, render: (v) => v || '—' },
+    { title: 'Хост', dataIndex: 'host', key: 'host' },
+    {
+      title: 'Действия', key: 'actions', width: 100,
+      render: (_, r) => <Button size="small" onClick={() => openEdit(r)}>Редакт.</Button>,
+    },
+  ]
+
+  return (
+    <div>
+      <div style={{ marginTop: 8, marginBottom: 16 }}>
+        <Text>Настройка отображения серверов: иконки, названия, локации — всё что видят пользователи</Text>
+      </div>
+      <Table dataSource={servers} columns={columns} rowKey="id" loading={loading} size="small" pagination={false} />
+
+      <Modal title={`Оформление — ${editing?.name || ''}`} open={modalOpen} onCancel={() => setModalOpen(false)}
+        onOk={handleSave} okText="Сохранить" cancelText="Отмена" width={520}>
+        <Form form={form} layout="vertical" style={{ marginTop: 12 }}>
+          <Form.Item name="name" label="Название сервера" rules={[{ required: true }]}>
+            <Input placeholder="Netherlands" />
+          </Form.Item>
+          <Space style={{ width: '100%' }} size={16}>
+            <Form.Item name="flag" label="Флаг (эмодзи)">
+              <Input placeholder="🇳🇱" />
+            </Form.Item>
+            <Form.Item name="country" label="Страна (ISO2)">
+              <Input placeholder="NL" maxLength={2} />
+            </Form.Item>
+          </Space>
+          <Form.Item name="location" label="Город / Локация">
+            <Input placeholder="Amsterdam" />
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   )
 }

@@ -27,6 +27,14 @@ class Server(Model):
     xui_username = fields.CharField(max_length=100, default="")
     xui_password = fields.CharField(max_length=255, default="")
 
+    is_dedicated = fields.BooleanField(default=False)
+
+    ssh_host = fields.CharField(max_length=255, default="")
+    ssh_port = fields.IntField(default=22)
+    ssh_username = fields.CharField(max_length=100, default="")
+    ssh_password = fields.CharField(max_length=255, default="")
+    ssh_key = fields.TextField(default="")
+
     created_at = fields.DatetimeField(default=datetime.utcnow)
     updated_at = fields.DatetimeField(auto_now=True)
 
