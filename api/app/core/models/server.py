@@ -7,6 +7,7 @@ class Server(Model):
     id = fields.IntField(pk=True)
     name = fields.CharField(max_length=100)
     host = fields.CharField(max_length=255)
+    address = fields.CharField(max_length=255, default="")
     port = fields.IntField(default=443)
     sub_port = fields.IntField(default=2096)
 

@@ -252,6 +252,7 @@ async def get_servers(admin: Admin = Depends(get_current_admin)):
             "id": s.id,
             "name": s.name,
             "host": s.host,
+            "address": s.address,
             "port": s.port,
             "sub_port": s.sub_port,
             "location": s.location,
@@ -282,6 +283,7 @@ async def get_servers(admin: Admin = Depends(get_current_admin)):
 class ServerCreateRequest(BaseModel):
     name: str = Field(..., max_length=100)
     host: str = Field(..., max_length=255)
+    address: str = Field(default="", max_length=255)
     port: int = Field(default=443)
     sub_port: int = Field(default=2096)
     location: Optional[str] = None
@@ -309,6 +311,7 @@ class ServerCreateRequest(BaseModel):
 class ServerUpdateRequest(BaseModel):
     name: Optional[str] = Field(None, max_length=100)
     host: Optional[str] = Field(None, max_length=255)
+    address: Optional[str] = Field(None, max_length=255)
     port: Optional[int] = None
     sub_port: Optional[int] = None
     location: Optional[str] = None

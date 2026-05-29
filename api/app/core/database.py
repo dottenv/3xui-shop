@@ -323,6 +323,18 @@ async def run_migrations():
         )
         print("[db] Applied migration: 010_user_balance")
 
+    # Migration 011 — server address (public connectable IP/domain for client configs)
+    if "011_server_address" not in applied:
+        col_info = await conn.execute_query("PRAGMA table_info('servers')")
+        col_names = {r["name"] for r in col_info[1]}
+        if "address" not in col_names:
+            await conn.execute_query('ALTER TABLE "servers" ADD COLUMN "address" VARCHAR(255) NOT NULL DEFAULT \'\'')
+        await conn.execute_query(
+            f'INSERT OR IGNORE INTO "{SCHEMA_MIGRATIONS_TABLE}" ("name") VALUES (?)',
+            ["011_server_address"],
+        )
+        print("[db] Applied migration: 011_server_address")
+
     print("[db] Schema up to date.")
 
 

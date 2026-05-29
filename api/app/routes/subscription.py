@@ -9,7 +9,7 @@ router = APIRouter()
 
 
 def build_server_links(server: Server, client_uuid: str, label: str) -> list[dict]:
-    host = server.host
+    host = server.address or server.host
     port = server.sub_port or server.port or 443
     name = quote(label)
     base = f"pbk={server.config_public_key}&fp=chrome&sni={server.config_sni}"
