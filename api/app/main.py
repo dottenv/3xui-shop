@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.core.database import init_db, close_db
+from app.core.middleware import ActiveUserMiddleware
 from app.routes import auth, user, payment, admin, webhooks
 
 
@@ -28,6 +29,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(ActiveUserMiddleware)
 
 # NOTE: Traefik strips /api prefix before forwarding
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
