@@ -4,7 +4,7 @@ from starlette.types import ASGIApp
 from app.core.security import decode_token
 from app.core.models import User, Admin
 
-SKIP_PATHS = {"/health", "/auth/login", "/auth/register"}
+SKIP_PATHS = {"/health", "/auth/login", "/auth/register", "/public/maintenance"}
 
 
 class ActiveUserMiddleware:

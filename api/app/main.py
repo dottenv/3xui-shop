@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import init_db, close_db
 from app.core.middleware import ActiveUserMiddleware
-from app.routes import auth, user, payment, admin, webhooks
+from app.routes import auth, user, payment, admin, webhooks, public, settings
 
 
 @asynccontextmanager
@@ -36,6 +36,8 @@ app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(user.router, prefix="/user", tags=["user"])
 app.include_router(payment.router, prefix="/payment", tags=["payment"])
 app.include_router(admin.router, prefix="/admin", tags=["admin"])
+app.include_router(settings.router, prefix="/admin", tags=["admin"])
+app.include_router(public.router, prefix="/public", tags=["public"])
 app.include_router(webhooks.router, prefix="/webhooks", tags=["webhooks"])
 
 

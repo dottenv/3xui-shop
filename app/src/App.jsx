@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './AuthContext'
+import { useMaintenance } from './MaintenanceContext'
 import ProtectedRoute from './ProtectedRoute'
 import Layout from './Layout'
 import Login from './pages/Login'
@@ -16,10 +17,17 @@ import History from './pages/History'
 import Support from './pages/Support'
 import Guides from './pages/Guides'
 import Referrals from './pages/Referrals'
+import MaintenancePage from './pages/MaintenancePage'
 
 const P = (Page) => <ProtectedRoute><Layout><Page /></Layout></ProtectedRoute>
 
 export default function App() {
+  const { maintenance } = useMaintenance()
+
+  if (maintenance === null) return null
+
+  if (maintenance) return <MaintenancePage />
+
   return (
     <BrowserRouter>
       <AuthProvider>

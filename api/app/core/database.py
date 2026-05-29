@@ -117,6 +117,15 @@ MIGRATIONS: list[tuple[str, str]] = [
             "created_at" TIMESTAMP NOT NULL
         );
     """),
+    ("002_settings", """
+        CREATE TABLE IF NOT EXISTS "settings" (
+            "key"   VARCHAR(100) NOT NULL PRIMARY KEY,
+            "value" TEXT NOT NULL,
+            "updated_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+        INSERT OR IGNORE INTO "settings" ("key", "value") VALUES ('maintenance_site', '0');
+        INSERT OR IGNORE INTO "settings" ("key", "value") VALUES ('maintenance_app', '0');
+    """),
 ]
 
 
