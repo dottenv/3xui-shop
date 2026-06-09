@@ -10,6 +10,14 @@ from app.core.services.xui import XuiService, build_base_url
 router = APIRouter()
 
 
+def tag_link(link: str, server: Server, traffic_limit: int) -> str:
+    gb = round(traffic_limit / (1024**3), 1) if traffic_limit else 0
+    name = f"{server.flag or ''} {server.name} ({gb}GB)".strip()
+    if "#" in link:
+        return link.rsplit("#", 1)[0] + "#" + name
+    return link + "#" + name
+
+
 async def fetch_panel_links_api(server: Server, email: str) -> list[str]:
     xui = XuiService(
         base_url=build_base_url(server.host, server.port, server.xui_url),
@@ -91,7 +99,7 @@ async def public_subscription(user_uuid: str, format: Optional[str] = "base64"):
             email = f"cwim_{safe_name}_{user.id}"
 
         links = await fetch_panel_links(server, email)
-        all_links.extend(links)
+        all_links.extend(tag_link(lnk, server, sub.traffic_limit) for lnk in links)
 
     if not all_links:
         raise HTTPException(status_code=404, detail="No configs available")

@@ -104,7 +104,7 @@ async def get_subscription_config(user: User = Depends(get_current_user)):
     if not subs:
         raise HTTPException(status_code=404, detail="Нет активной подписки")
 
-    from app.routes.subscription import fetch_panel_links
+    from app.routes.subscription import fetch_panel_links, tag_link
 
     all_servers = []
     for sub in subs:
@@ -123,7 +123,7 @@ async def get_subscription_config(user: User = Depends(get_current_user)):
         link = ""
         links = await fetch_panel_links(server, email)
         if links:
-            link = links[0]
+            link = tag_link(links[0], server, sub.traffic_limit)
 
         all_servers.append({
             "server_name": server.name,
