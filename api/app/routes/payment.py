@@ -58,7 +58,7 @@ async def create_xui_client(server: Server, email_tag: str, traffic_limit_gb: in
             inbound_id=server.inbound_id,
             email=email_tag,
             client_uuid=client_id,
-            traffic_limit_gb=traffic_limit_gb,
+            traffic_limit_gb=0,
             expire_days=duration,
             flow=flow,
         )
@@ -93,7 +93,7 @@ async def issue_subscription(user: User, plan_id: str) -> list[Subscription]:
     now = datetime.now(timezone.utc)
     duration = plan["duration_days"]
     expires_at = now + timedelta(days=duration)
-    traffic_limit_gb = 50
+    traffic_limit_gb = 0
     created = []
 
     for server in servers:

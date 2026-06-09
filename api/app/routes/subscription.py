@@ -12,7 +12,7 @@ router = APIRouter()
 
 def tag_link(link: str, server: Server, traffic_limit: int) -> str:
     gb = round(traffic_limit / (1024**3), 1) if traffic_limit else 0
-    name = f"{server.flag or ''} {server.name} ({gb}GB)".strip()
+    name = f"{server.flag or ''} {server.name}".strip()
     if "#" in link:
         return link.rsplit("#", 1)[0] + "#" + name
     return link + "#" + name
@@ -105,7 +105,7 @@ async def public_subscription(user_uuid: str, format: Optional[str] = "base64"):
         raise HTTPException(status_code=404, detail="No configs available")
 
     profile_title = user.email or "VPN Subscription"
-    userinfo = f"upload={total_up}; download={total_down}; total={total_limit}"
+    userinfo = f"upload=0; download=0; total=0"
     if max_expire:
         userinfo += f"; expire={max_expire}"
 
