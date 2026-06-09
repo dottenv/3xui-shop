@@ -207,6 +207,9 @@ class XuiClient:
         obj = data.get("obj", [])
         if isinstance(obj, list):
             return obj
+        if isinstance(obj, dict):
+            link = obj.get("link", "")
+            return [link] if link else []
         if isinstance(obj, str):
             return self._decode_links(obj)
         return []
@@ -216,6 +219,9 @@ class XuiClient:
         obj = data.get("obj", [])
         if isinstance(obj, list):
             return obj
+        if isinstance(obj, dict):
+            link = obj.get("link", "")
+            return [link] if link else []
         if isinstance(obj, str):
             return self._decode_links(obj)
         return []
