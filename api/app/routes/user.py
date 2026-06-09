@@ -121,12 +121,9 @@ async def get_subscription_config(user: User = Depends(get_current_user)):
             email = f"cwim_{safe_name}_{user.id}"
 
         link = ""
-        try:
-            links = await fetch_panel_links(server, email)
-            if links:
-                link = links[0]
-        except Exception:
-            pass
+        links = await fetch_panel_links(server, email)
+        if links:
+            link = links[0]
 
         all_servers.append({
             "server_name": server.name,

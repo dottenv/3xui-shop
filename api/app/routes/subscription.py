@@ -5,18 +5,35 @@ from fastapi import APIRouter, HTTPException, Response
 from typing import Optional
 
 from app.core.models import User, Subscription, Server
+from app.core.services.xui import XuiService, build_base_url
 
 router = APIRouter()
 
 
-async def fetch_panel_links(server: Server, email: str) -> list[str]:
-    base = (server.xui_url or f"https://{server.host}:{server.port}").rstrip("/")
-    if not base.startswith("http"):
-        base = f"https://{base}"
+async def fetch_panel_links_api(server: Server, email: str) -> list[str]:
+    xui = XuiService(
+        base_url=build_base_url(server.host, server.port, server.xui_url),
+        username=server.xui_username,
+        password=server.xui_password,
+        api_token=server.xui_api_token,
+    )
+    try:
+        return await xui.get_sub_links(email)
+    except Exception:
+        return []
+    finally:
+        await xui.close()
+
+
+async def fetch_panel_links_public(server: Server, email: str) -> list[str]:
+    base = f"https://{server.host}:{server.port}"
     url = f"{base}/sub/{email}"
 
-    async with httpx.AsyncClient(verify=False, timeout=15) as client:
-        resp = await client.get(url)
+    try:
+        async with httpx.AsyncClient(verify=False, timeout=15) as client:
+            resp = await client.get(url)
+    except Exception:
+        return []
 
     if resp.status_code != 200:
         return []
@@ -27,6 +44,13 @@ async def fetch_panel_links(server: Server, email: str) -> list[str]:
         return []
 
     return [line.strip() for line in decoded.split("\n") if line.strip()]
+
+
+async def fetch_panel_links(server: Server, email: str) -> list[str]:
+    links = await fetch_panel_links_api(server, email)
+    if not links:
+        links = await fetch_panel_links_public(server, email)
+    return links
 
 
 @router.get("/{user_uuid}")
@@ -66,11 +90,8 @@ async def public_subscription(user_uuid: str, format: Optional[str] = "base64"):
             safe_name = server.name.replace(" ", "_").replace("/", "_")[:20]
             email = f"cwim_{safe_name}_{user.id}"
 
-        try:
-            links = await fetch_panel_links(server, email)
-            all_links.extend(links)
-        except Exception:
-            pass
+        links = await fetch_panel_links(server, email)
+        all_links.extend(links)
 
     if not all_links:
         raise HTTPException(status_code=404, detail="No configs available")
