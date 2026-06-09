@@ -1,17 +1,27 @@
 import { useEffect, useState } from 'react'
-import { apiCached } from '../api'
+import { apiJson } from '../api'
 import { BackButton } from '../ui'
 import { useConfig } from '../ConfigContext'
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 export default function Servers() {
   const { t } = useConfig()
+  const navigate = useNavigate()
   const [servers, setServers] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    apiCached('/user/servers').then(setServers).catch(() => {}).finally(() => setLoading(false))
+    apiJson('/user/servers').then(setServers).catch(() => {}).finally(() => setLoading(false))
   }, [])
+
+  async function connectVpn() {
+    try {
+      const data = await apiJson('/connection?app=hiddify')
+      window.location.href = data.deep_link
+    } catch {
+      navigate('/config')
+    }
+  }
 
   const online = servers.filter(s => s.is_online)
   const offline = servers.filter(s => !s.is_online)
@@ -44,9 +54,9 @@ export default function Servers() {
               <div className="w-12 bg-bg border border-border rounded-full h-1.5">
                 <div className={`h-1.5 rounded-full ${s.load > 70 ? 'bg-yellow-400' : 'bg-green-400'}`} style={{ width: `${s.load || 0}%` }} />
               </div>
-              <Link to={s.is_online ? '/config' : '#'} className={`text-xs font-medium px-3 py-1.5 rounded-lg transition-colors text-center ${s.is_online ? 'bg-primary/10 text-primary hover:bg-primary/20' : 'bg-border/30 text-muted cursor-not-allowed pointer-events-none'}`}>
+              <button onClick={connectVpn} disabled={!s.is_online} className={`text-xs font-medium px-3 py-1.5 rounded-lg transition-colors text-center ${s.is_online ? 'bg-primary/10 text-primary hover:bg-primary/20' : 'bg-border/30 text-muted cursor-not-allowed'}`}>
                 {s.is_online ? t('app.pages.servers.connect') : t('app.pages.servers.offline')}
-              </Link>
+              </button>
             </div>
           </div>
         ))}

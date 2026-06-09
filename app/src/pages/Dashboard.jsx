@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { apiJson } from '../api'
 import { CardSkeleton } from '../ui'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useConfig } from '../ConfigContext'
 
 const planLabels = {
@@ -19,6 +19,7 @@ const quickLinks = [
 
 export default function Dashboard() {
   const { t } = useConfig()
+  const navigate = useNavigate()
   const [sub, setSub] = useState(null)
   const [subLoading, setSubLoading] = useState(true)
   const [servers, setServers] = useState([])
@@ -33,6 +34,15 @@ export default function Dashboard() {
     apiJson('/user/balance').then(d => setBalance(d.balance)).catch(() => {})
   }
   useEffect(() => { load() }, [])
+
+  async function connectVpn() {
+    try {
+      const data = await apiJson('/connection?app=hiddify')
+      window.location.href = data.deep_link
+    } catch {
+      navigate('/config')
+    }
+  }
 
   const isPremium = sub?.is_active
   const d = (s) => t('app.pages.dashboard.' + s)
@@ -71,9 +81,9 @@ export default function Dashboard() {
                 <span>{(sub.traffic_limit / 1024 / 1024 / 1024).toFixed(0) + ' GB'}</span>
               </div>
               <p className="text-xs text-muted">Истекает: {new Date(sub.expires_at).toLocaleDateString('ru-RU')}</p>
-              <Link to="/config" className="block w-full bg-primary text-white rounded-xl py-3 text-sm font-medium text-center hover:bg-primary-dark transition-colors shadow-lg shadow-primary/20">
+              <button onClick={connectVpn} className="block w-full bg-primary text-white rounded-xl py-3 text-sm font-medium text-center hover:bg-primary-dark transition-colors shadow-lg shadow-primary/20">
                 Подключиться
-              </Link>
+              </button>
             </div>
           ) : (
             <div className="space-y-3">

@@ -1,8 +1,7 @@
-from fastapi import APIRouter, Depends
-from typing import Optional
+from fastapi import APIRouter, Depends, HTTPException
 from datetime import datetime, timezone
-from urllib.parse import quote
 
+from app.core.config import settings
 from app.core.schemas import UserResponse, ProfileUpdate
 from app.core.models import User, Subscription, Server
 from app.core.deps import get_current_user
@@ -79,6 +78,7 @@ async def get_subscription(user: User = Depends(get_current_user)):
         "days_left": days_left,
         "servers": servers_info,
         "server_count": len(servers_info),
+        "sub_url": f"https://{settings.APP_DOMAIN}/sub/{user.uuid}",
     }
 
 
@@ -104,26 +104,18 @@ async def get_subscription_config(user: User = Depends(get_current_user)):
     if not subs:
         raise HTTPException(status_code=404, detail="Нет активной подписки")
 
+    from app.routes.subscription import build_server_link
+
     all_servers = []
     for sub in subs:
         server = await Server.get_or_none(id=sub.server_id)
-        if not server or not sub.client_uuid:
+        if not server or not sub.client_uuid or server.is_dedicated:
             continue
 
         host = server.address or server.host
         port = server.sub_port or server.port or 443
-        uuid = sub.client_uuid
-        label = f"Cwim VPN — {server.flag or ''} {server.name}".strip()
-        name = quote(label)
-        base = f"pbk={server.config_public_key}&fp=chrome&sni={server.config_sni}"
-        sid = server.config_short_id
-        flow = server.config_flow
-
-        links = []
-        p1 = f"type=tcp&security=reality&flow={flow}&{base}&sid={sid}"
-        links.append({"protocol": "VLESS+Reality TCP", "link": f"vless://{uuid}@{host}:{port}?{p1}#{name}"})
-        p2 = f"type=xhttp&security=reality&flow={flow}&{base}&sid={sid}"
-        links.append({"protocol": "VLESS+Reality XHTTP", "link": f"vless://{uuid}@{host}:{port}?{p2}#{name}"})
+        label = f"{server.flag or ''} {server.name}".strip()
+        link = build_server_link(server, sub.client_uuid, label)
 
         all_servers.append({
             "server_name": server.name,
@@ -131,9 +123,9 @@ async def get_subscription_config(user: User = Depends(get_current_user)):
             "host": host,
             "port": port,
             "protocol": server.protocol,
-            "client_uuid": uuid,
+            "client_uuid": sub.client_uuid,
             "is_online": server.is_online,
-            "links": links,
+            "link": link,
         })
 
     if not all_servers:

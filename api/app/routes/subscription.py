@@ -8,22 +8,45 @@ from app.core.models import User, Subscription, Server
 router = APIRouter()
 
 
-def build_server_links(server: Server, client_uuid: str, label: str) -> list[dict]:
+def build_vless_link(host: str, port: int, client_uuid: str, server: Server, label: str) -> str:
+    params = []
+    params.append(f"type=tcp")
+    params.append(f"security=reality")
+    if server.config_flow:
+        params.append(f"flow={server.config_flow}")
+    if server.config_public_key:
+        params.append(f"pbk={server.config_public_key}")
+    params.append("fp=chrome")
+    if server.config_sni:
+        params.append(f"sni={server.config_sni}")
+    if server.config_short_id:
+        params.append(f"sid={server.config_short_id}")
+    query = "&".join(params)
+    return f"vless://{client_uuid}@{host}:{port}?{query}#{quote(label)}"
+
+
+def build_trojan_link(host: str, port: int, password: str, server: Server, label: str) -> str:
+    params = []
+    params.append("security=reality")
+    if server.config_public_key:
+        params.append(f"pbk={server.config_public_key}")
+    params.append("fp=chrome")
+    if server.config_sni:
+        params.append(f"sni={server.config_sni}")
+    if server.config_short_id:
+        params.append(f"sid={server.config_short_id}")
+    query = "&".join(params)
+    return f"trojan://{password}@{host}:{port}?{query}#{quote(label)}"
+
+
+def build_server_link(server: Server, client_uuid: str, label: str) -> str:
     host = server.address or server.host
     port = server.sub_port or server.port or 443
-    name = quote(label)
-    base = f"pbk={server.config_public_key}&fp=chrome&sni={server.config_sni}"
-    sid = server.config_short_id
-    flow = server.config_flow
 
-    links = []
-    p1 = f"type=tcp&security=reality&flow={flow}&{base}&sid={sid}"
-    links.append({"protocol": "VLESS+Reality TCP", "link": f"vless://{client_uuid}@{host}:{port}?{p1}#{name}"})
-
-    p2 = f"type=xhttp&security=reality&flow={flow}&{base}&sid={sid}"
-    links.append({"protocol": "VLESS+Reality XHTTP", "link": f"vless://{client_uuid}@{host}:{port}?{p2}#{name}"})
-
-    return links
+    proto = (server.protocol or "vless").lower()
+    if proto == "trojan":
+        return build_trojan_link(host, port, client_uuid, server, label)
+    return build_vless_link(host, port, client_uuid, server, label)
 
 
 @router.get("/{user_uuid}")
@@ -36,21 +59,23 @@ async def public_subscription(user_uuid: str, format: Optional[str] = "base64"):
     if not subs:
         raise HTTPException(status_code=404, detail="No active subscriptions")
 
-    all_links = []
+    lines = []
     for sub in subs:
         if not sub.client_uuid:
             continue
         server = await Server.get_or_none(id=sub.server_id)
-        if not server:
+        if not server or server.is_dedicated:
             continue
-        label = f"Cwim VPN — {server.flag or ''} {server.name}".strip()
-        links = build_server_links(server, sub.client_uuid, label)
-        all_links.extend(links)
+        label = f"{server.flag or ''} {server.name}".strip()
+        link = build_server_link(server, sub.client_uuid, label)
+        lines.append(link)
 
-    text = "\n".join(l["link"] for l in all_links)
+    if not lines:
+        raise HTTPException(status_code=404, detail="No configs available")
+
+    text = "\n".join(lines)
 
     if format == "json":
-        return {"subscriptions": all_links}
+        return {"subscriptions": lines}
 
-    encoded = base64.b64encode(text.encode()).decode()
-    return encoded
+    return base64.b64encode(text.encode()).decode()

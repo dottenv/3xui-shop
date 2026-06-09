@@ -99,20 +99,25 @@ class XuiClient:
 
     async def add_client(self, inbound_ids: list[int],
                          email: str,
+                         client_id: str = "",
                          traffic_limit_gb: int = 0,
                          expire_days: int = 30,
                          tg_id: int = 0,
-                         limit_ip: int = 0) -> dict:
+                         limit_ip: int = 0,
+                         flow: str = "xtls-rprx-vision") -> dict:
         import time as _time
         now = int(_time.time())
         expiry_ms = int((now + expire_days * 86400) * 1000) if expire_days > 0 else 0
         payload = {
             "client": {
+                "id": client_id,
                 "email": email,
                 "totalGB": traffic_limit_gb * 1024 * 1024 * 1024,
                 "expiryTime": expiry_ms,
                 "tgId": tg_id,
                 "limitIp": limit_ip,
+                "flow": flow,
+                "subId": email,
                 "enable": True,
             },
             "inboundIds": inbound_ids,
@@ -217,12 +222,15 @@ class XuiService:
         await self._client.close()
 
     async def add_client(self, inbound_id: int, email: str, client_uuid: str,
-                         traffic_limit_gb: int = 0, expire_days: int = 30) -> bool:
+                         traffic_limit_gb: int = 0, expire_days: int = 30,
+                         flow: str = "xtls-rprx-vision") -> bool:
         return await self._client.add_client(
             inbound_ids=[inbound_id],
             email=email,
+            client_id=client_uuid,
             traffic_limit_gb=traffic_limit_gb,
             expire_days=expire_days,
+            flow=flow,
         )
 
     async def update_client(self, client_uuid: str, email: str, enable: bool = True,

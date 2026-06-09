@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { apiCached } from '../api'
+import { apiJson } from '../api'
 import { BackButton } from '../ui'
 import { useConfig } from '../ConfigContext'
 
@@ -11,10 +11,17 @@ export default function Config() {
   const [copied, setCopied] = useState(null)
 
   useEffect(() => {
-    apiCached('/user/subscription/config').then(setConfig).catch((err) => {
+    apiJson('/user/subscription/config').then(setConfig).catch((err) => {
       setError(err.message)
     }).finally(() => setLoading(false))
   }, [])
+
+  async function openInApp(app) {
+    try {
+      const data = await apiJson(`/connection?app=${app}`)
+      window.location.href = data.deep_link
+    } catch {}
+  }
 
   async function copyLink(link) {
     try {
@@ -35,7 +42,7 @@ export default function Config() {
 
   function downloadAll() {
     if (!config?.servers?.length) return
-    const text = config.servers.flatMap(s => s.links).map(l => l.link).join('\n')
+    const text = config.servers.map(s => s.link).join('\n')
     const blob = new Blob([text], { type: 'text/plain' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -85,8 +92,17 @@ export default function Config() {
         </div>
       </div>
 
+      <div className="flex gap-2">
+        <button onClick={() => openInApp('hiddify')} className="flex-1 bg-primary text-white rounded-xl py-3 text-sm font-medium text-center hover:bg-primary-dark transition-colors shadow-lg shadow-primary/20">
+          Открыть в Hiddify
+        </button>
+        <button onClick={() => openInApp('v2rayng')} className="flex-1 bg-surface border border-border rounded-xl py-3 text-sm font-medium text-center hover:border-primary transition-colors">
+          Открыть в v2rayNG
+        </button>
+      </div>
+
       <div className="text-xs text-muted bg-bg border border-border rounded-xl px-4 py-3 break-all select-all font-mono">
-        {config.servers.flatMap(s => s.links).map(l => l.link).join('\n')}
+        {config.servers.map(s => s.link).join('\n')}
       </div>
 
       {config.servers.map((server, si) => (
@@ -96,28 +112,24 @@ export default function Config() {
             <span className="font-semibold text-sm">{server.server_name}</span>
             <span className={`w-1.5 h-1.5 rounded-full ${server.is_online ? 'bg-green-400' : 'bg-red-400'}`} />
           </div>
-          <div className="space-y-3">
-            {server.links.map((item, i) => (
-              <div key={i} className="bg-surface border border-border rounded-2xl overflow-hidden">
-                <div className="px-5 pt-5 pb-3 flex items-center justify-between">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-muted">{item.protocol}</span>
-                  <span className="text-[10px] text-muted bg-bg px-2 py-1 rounded-full">{item.protocol.split(' ')[0]}</span>
-                </div>
-                <div className="px-5 pb-5">
-                  <div className="bg-bg border border-border rounded-xl p-4 text-xs font-mono text-muted break-all select-all leading-relaxed">
-                    {item.link}
-                  </div>
-                </div>
-                <div className="px-5 pb-5 flex gap-2">
-                  <button
-                    onClick={() => copyLink(item.link)}
-                    className="flex-1 bg-primary text-white rounded-xl py-3 text-sm font-medium hover:bg-primary-dark transition-colors"
-                  >
-                    {copied === item.link.slice(0, 20) ? t('app.pages.config.copied') : t('app.pages.config.copy')}
-                  </button>
-                </div>
+          <div className="bg-surface border border-border rounded-2xl overflow-hidden">
+            <div className="px-5 pt-5 pb-3 flex items-center justify-between">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted">Подключение</span>
+              <span className="text-[10px] text-muted bg-bg px-2 py-1 rounded-full">{server.protocol || 'VLESS'}</span>
+            </div>
+            <div className="px-5 pb-5">
+              <div className="bg-bg border border-border rounded-xl p-4 text-xs font-mono text-muted break-all select-all leading-relaxed">
+                {server.link}
               </div>
-            ))}
+            </div>
+            <div className="px-5 pb-5 flex gap-2">
+              <button
+                onClick={() => copyLink(server.link)}
+                className="flex-1 bg-primary text-white rounded-xl py-3 text-sm font-medium hover:bg-primary-dark transition-colors"
+              >
+                {copied === server.link.slice(0, 20) ? t('app.pages.config.copied') : t('app.pages.config.copy')}
+              </button>
+            </div>
           </div>
         </div>
       ))}

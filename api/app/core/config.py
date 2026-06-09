@@ -8,6 +8,8 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://redis:6379/0"
     API_SECRET_KEY: str = "change-me-in-production"
 
+    APP_DOMAIN: str = "app.cwim.ru"
+
     CORS_ORIGINS: List[str] = [
         "https://app.cwim.ru",
         "https://crm.cwim.ru",

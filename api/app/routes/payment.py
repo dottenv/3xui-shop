@@ -7,7 +7,7 @@ import random
 
 from app.core.models import User, Transaction, Subscription, Server
 from app.core.deps import get_current_user
-from app.core.services.xui import XuiService, build_base_url
+from app.core.services.xui import XuiService, build_base_url, generate_uuid
 
 router = APIRouter()
 
@@ -42,13 +42,14 @@ PLANS = {
 }
 
 
-async def create_xui_client(server: Server, email_tag: str, traffic_limit_gb: int, duration: int) -> str:
+async def create_xui_client(server: Server, email_tag: str, traffic_limit_gb: int, duration: int, flow: str = "xtls-rprx-vision") -> str:
     xui = XuiService(
         base_url=build_base_url(server.host, server.port, server.xui_url),
         username=server.xui_username,
         password=server.xui_password,
         api_token=server.xui_api_token,
     )
+    client_id = generate_uuid()
     try:
         existing = await xui.get_client_by_email(email_tag)
         if existing:
@@ -56,12 +57,12 @@ async def create_xui_client(server: Server, email_tag: str, traffic_limit_gb: in
         await xui.add_client(
             inbound_id=server.inbound_id,
             email=email_tag,
-            client_uuid="",
+            client_uuid=client_id,
             traffic_limit_gb=traffic_limit_gb,
             expire_days=duration,
+            flow=flow,
         )
-        real_client = await xui.get_client_by_email(email_tag)
-        return (real_client or {}).get("uuid", "")
+        return client_id
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"3X-UI {server.name}: {str(e)}")
     finally:
