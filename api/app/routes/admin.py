@@ -367,7 +367,7 @@ async def create_server(body: ServerCreateRequest, admin: Admin = Depends(get_cu
             "fallbacks": [],
         },
         "streamSettings": {
-            "network": "tcp",
+            "network": "xhttp",
             "security": "reality",
             "realitySettings": {
                 "dest": f"{sni}:443",
@@ -376,10 +376,10 @@ async def create_server(body: ServerCreateRequest, admin: Admin = Depends(get_cu
                 "shortIds": [short_id],
                 "spiderX": "/",
             },
-            "tcpSettings": {
-                "header": {
-                    "type": "none",
-                },
+            "xhttpSettings": {
+                "mode": "packet-up",
+                "path": "/",
+                "host": "",
             },
         },
         "sniffing": {

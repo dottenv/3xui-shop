@@ -167,6 +167,12 @@ class XuiClient:
             return [link] if link else []
         if isinstance(obj, list):
             return obj
+        if isinstance(obj, str):
+            try:
+                decoded = base64.b64decode(obj).decode()
+                return [line.strip() for line in decoded.split("\n") if line.strip()]
+            except Exception:
+                return [obj.strip()] if obj.strip() else []
         return []
 
     async def get_clients(self) -> list:
