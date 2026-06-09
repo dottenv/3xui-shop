@@ -1,5 +1,6 @@
 import base64
-from fastapi import APIRouter, HTTPException
+import json
+from fastapi import APIRouter, HTTPException, Response
 from urllib.parse import quote
 from typing import Optional
 
@@ -10,8 +11,8 @@ router = APIRouter()
 
 def build_vless_link(host: str, port: int, client_uuid: str, server: Server, label: str) -> str:
     params = []
-    params.append(f"type=tcp")
-    params.append(f"security=reality")
+    params.append("type=tcp")
+    params.append("security=reality")
     if server.config_flow:
         params.append(f"flow={server.config_flow}")
     if server.config_public_key:
@@ -60,6 +61,11 @@ async def public_subscription(user_uuid: str, format: Optional[str] = "base64"):
         raise HTTPException(status_code=404, detail="No active subscriptions")
 
     lines = []
+    total_down = 0
+    total_up = 0
+    total_limit = 0
+    max_expire = 0
+
     for sub in subs:
         if not sub.client_uuid:
             continue
@@ -70,12 +76,34 @@ async def public_subscription(user_uuid: str, format: Optional[str] = "base64"):
         link = build_server_link(server, sub.client_uuid, label)
         lines.append(link)
 
+        total_down += sub.traffic_down or 0
+        total_up += sub.traffic_up or 0
+        total_limit += sub.traffic_limit or 0
+        if sub.expires_at:
+            ts = int(sub.expires_at.timestamp())
+            if ts > max_expire:
+                max_expire = ts
+
     if not lines:
         raise HTTPException(status_code=404, detail="No configs available")
 
-    text = "\n".join(lines)
+    profile_title = user.email or "VPN Subscription"
+    userinfo = f"upload={total_up}; download={total_down}; total={total_limit}"
+    if max_expire:
+        userinfo += f"; expire={max_expire}"
+
+    headers = {
+        "profile-title": profile_title,
+        "subscription-userinfo": userinfo,
+        "profile-update-interval": "24",
+        "content-encoding": "identity",
+    }
 
     if format == "json":
-        return {"subscriptions": lines}
+        headers["content-type"] = "application/json"
+        return Response(content=json.dumps({"subscriptions": lines}), headers=headers)
 
-    return base64.b64encode(text.encode()).decode()
+    headers["content-type"] = "text/plain; charset=utf-8"
+    text = "\n".join(lines)
+    body = base64.b64encode(text.encode()).decode()
+    return Response(content=body, headers=headers)

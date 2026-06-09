@@ -7,14 +7,6 @@ from app.core.deps import get_current_user
 
 router = APIRouter()
 
-DEEP_LINKS = {
-    "hiddify": "hiddify://import/subscription?url={sub_url}",
-    "v2rayng": "v2rayng://subscribe/?server={sub_url}",
-    "nekobox": "nekobox://subscribe?url={sub_url}",
-    "singbox": "sing-box://import-remote-profile?url={sub_url}",
-    "shadowrocket": "shadowrocket://add/sub?url={sub_url}",
-}
-
 
 @router.get("/connection")
 async def get_connection(
@@ -23,12 +15,21 @@ async def get_connection(
 ):
     sub_url = f"https://{settings.APP_DOMAIN}/sub/{user.uuid}"
     encoded = quote(sub_url, safe="")
+    label = quote(user.email or "VPN", safe="")
 
-    template = DEEP_LINKS.get(app)
-    if not template:
-        raise HTTPException(status_code=400, detail=f"Неподдерживаемое приложение: {app}")
+    if app == "hiddify":
+        deep_link = f"hiddify://import/{sub_url}#{label}"
+    elif app == "v2rayng":
+        deep_link = f"v2rayng://install-config/?url={encoded}"
+    elif app == "nekobox":
+        deep_link = f"clash://install-config?url={encoded}&name={label}"
+    elif app == "singbox":
+        deep_link = f"sing-box://import-remote-profile?url={encoded}"
+    elif app == "shadowrocket":
+        deep_link = f"shadowrocket://add/sub?url={encoded}"
+    else:
+        raise HTTPException(status_code=400, detail=f"Unsupported app: {app}")
 
-    deep_link = template.format(sub_url=encoded)
     return {"deep_link": deep_link, "sub_url": sub_url}
 
 
