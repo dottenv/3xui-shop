@@ -9,11 +9,13 @@ export default function Config() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(null)
+  const [apps, setApps] = useState([])
 
   useEffect(() => {
     apiJson('/user/subscription/config').then(setConfig).catch((err) => {
       setError(err.message)
     }).finally(() => setLoading(false))
+    apiJson('/connection/apps').then(setApps).catch(() => {})
   }, [])
 
   async function openInApp(app) {
@@ -92,13 +94,12 @@ export default function Config() {
         </div>
       </div>
 
-      <div className="flex gap-2">
-        <button onClick={() => openInApp('hiddify')} className="flex-1 bg-primary text-white rounded-xl py-3 text-sm font-medium text-center hover:bg-primary-dark transition-colors shadow-lg shadow-primary/20">
-          Открыть в Hiddify
-        </button>
-        <button onClick={() => openInApp('v2rayng')} className="flex-1 bg-surface border border-border rounded-xl py-3 text-sm font-medium text-center hover:border-primary transition-colors">
-          Открыть в v2rayNG
-        </button>
+      <div className="flex flex-wrap gap-2">
+        {apps.map(a => (
+          <button key={a.id} onClick={() => openInApp(a.id)} className="flex-1 min-w-[120px] bg-surface border border-border rounded-xl py-3 text-sm font-medium text-center hover:border-primary transition-colors">
+            {a.name}
+          </button>
+        ))}
       </div>
 
       <div className="text-xs text-muted bg-bg border border-border rounded-xl px-4 py-3 break-all select-all font-mono">
