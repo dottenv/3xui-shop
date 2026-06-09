@@ -336,6 +336,18 @@ async def run_migrations():
         )
         print("[db] Applied migration: 011_server_address")
 
+    # Migration 012 — client_email on subscriptions
+    if "012_client_email" not in applied:
+        col_info = await conn.execute_query("PRAGMA table_info('subscriptions')")
+        col_names = {r["name"] for r in col_info[1]}
+        if "client_email" not in col_names:
+            await conn.execute_query('ALTER TABLE "subscriptions" ADD COLUMN "client_email" VARCHAR(255)')
+        await conn.execute_query(
+            f'INSERT OR IGNORE INTO "{SCHEMA_MIGRATIONS_TABLE}" ("name") VALUES (?)',
+            ["012_client_email"],
+        )
+        print("[db] Applied migration: 012_client_email")
+
     print("[db] Schema up to date.")
 
 
