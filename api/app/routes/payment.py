@@ -109,6 +109,7 @@ async def issue_subscription(user: User, plan_id: str) -> list[Subscription]:
             plan_id=plan_id,
             server_id=server.id,
             client_uuid=xui_uuid,
+            client_email=email_tag,
             devices=plan["devices"],
             duration_days=duration,
             traffic_limit=traffic_limit_gb * 1024 * 1024 * 1024,

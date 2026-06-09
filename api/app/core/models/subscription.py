@@ -10,6 +10,7 @@ class Subscription(Model):
     plan_id = fields.CharField(max_length=50)
     server_id = fields.IntField()
     client_uuid = fields.CharField(max_length=36, unique=True)
+    client_email = fields.CharField(max_length=255, null=True)
 
     devices = fields.IntField(default=1)
     duration_days = fields.IntField(default=30)
