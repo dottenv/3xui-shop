@@ -1,4 +1,6 @@
 import uuid as uuid_lib
+import base64
+import os
 from typing import Optional
 import httpx
 
@@ -66,6 +68,9 @@ class XuiClient:
         return r.json()
 
     # ─── Inbounds ───────────────────────────────────────────
+
+    async def add_inbound(self, inbound_data: dict) -> dict:
+        return await self._api_post("/panel/api/inbounds/add", inbound_data)
 
     async def get_inbounds(self) -> list:
         data = await self._api_get("/panel/api/inbounds/list")
@@ -265,6 +270,9 @@ class XuiService:
             return None
         return await self._client.get_client_traffic(email=f"u{sub.user_id}_{sub.server_id}")
 
+    async def add_inbound(self, inbound_data: dict) -> dict:
+        return await self._client.add_inbound(inbound_data)
+
     async def get_inbounds(self) -> list:
         return await self._client.get_inbounds()
 
@@ -317,6 +325,19 @@ def get_panel_base_url(server) -> str:
 
 def generate_uuid() -> str:
     return str(uuid_lib.uuid4())
+
+
+def generate_reality_keys():
+    try:
+        from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
+        from cryptography.hazmat.primitives.serialization import Encoding, PrivateFormat, PublicFormat, NoEncryption
+        key = X25519PrivateKey.generate()
+        private_raw = key.private_bytes(Encoding.Raw, PrivateFormat.Raw, NoEncryption())
+        public_raw = key.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw)
+    except ImportError:
+        private_raw = os.urandom(32)
+        public_raw = b""
+    return base64.b64encode(private_raw).decode(), base64.b64encode(public_raw).decode()
 
 
 def build_base_url(host: str, port: int = 443, xui_url: str = "") -> str:

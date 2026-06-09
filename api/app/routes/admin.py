@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field
+import os
 from typing import Optional
 from datetime import datetime
 
@@ -10,7 +11,7 @@ from app.core.security import (
     decode_token,
 )
 from app.core.models import Admin, User, Server, Transaction, Subscription, IpWhitelist
-from app.core.services.xui import XuiService, build_base_url
+from app.core.services.xui import XuiService, build_base_url, generate_reality_keys, generate_uuid
 
 router = APIRouter()
 admin_bearer = HTTPBearer(auto_error=False)
@@ -341,8 +342,91 @@ class ServerUpdateRequest(BaseModel):
 
 @router.post("/servers")
 async def create_server(body: ServerCreateRequest, admin: Admin = Depends(get_current_admin)):
-    server = await Server.create(**body.model_dump())
-    return {"id": server.id, "name": server.name, "host": server.host}
+    data = body.model_dump()
+    server = await Server.create(**data)
+
+    if not data.get("xui_url") and not data.get("xui_username") and not data.get("xui_api_token"):
+        return {"id": server.id, "name": server.name, "host": server.host, "note": "No 3X-UI credentials — inbound not created"}
+
+    private_key, public_key = generate_reality_keys()
+    short_id = os.urandom(4).hex()
+
+    sni = data.get("config_sni") or "www.microsoft.com"
+
+    inbound_payload = {
+        "enable": True,
+        "remark": f"{server.name}-{server.port or 443}",
+        "listen": "",
+        "port": server.port or 443,
+        "protocol": "vless",
+        "expiryTime": 0,
+        "total": 0,
+        "settings": {
+            "clients": [],
+            "decryption": "none",
+            "fallbacks": [],
+        },
+        "streamSettings": {
+            "network": "xhttp",
+            "security": "reality",
+            "realitySettings": {
+                "dest": f"{sni}:443",
+                "serverNames": [sni],
+                "privateKey": private_key,
+                "shortIds": [short_id],
+                "spiderX": "/",
+            },
+            "xhttpSettings": {
+                "mode": "packet-up",
+                "path": "/",
+                "host": "",
+            },
+        },
+        "sniffing": {
+            "enabled": True,
+            "destOverride": ["http", "tls", "quic"],
+        },
+    }
+
+    xui = XuiService(
+        base_url=build_base_url(server.host, server.port, server.xui_url),
+        username=server.xui_username,
+        password=server.xui_password,
+        api_token=server.xui_api_token,
+    )
+    try:
+        result = await xui.add_inbound(inbound_payload)
+        if result.get("success") and result.get("obj"):
+            obj = result["obj"]
+            inbound_id = obj.get("id") if isinstance(obj, dict) else None
+        else:
+            inbound_id = None
+    except Exception:
+        inbound_id = None
+    finally:
+        await xui.close()
+
+    if inbound_id:
+        await Server.filter(id=server.id).update(
+            inbound_id=inbound_id,
+            config_public_key=public_key,
+            config_short_id=short_id,
+            config_sni=sni,
+        )
+        server.inbound_id = inbound_id
+        server.config_public_key = public_key
+        server.config_short_id = short_id
+        server.config_sni = sni
+
+    return {
+        "id": server.id,
+        "name": server.name,
+        "host": server.host,
+        "inbound_id": inbound_id,
+        "public_key": public_key,
+        "short_id": short_id,
+        "sni": sni,
+    }
 
 
 @router.put("/servers/{server_id}")
