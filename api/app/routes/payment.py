@@ -99,8 +99,9 @@ async def issue_subscription(user: User, plan_id: str) -> list[Subscription]:
     for server in servers:
         safe_name = server.name.replace(" ", "_").replace("/", "_")[:20]
         email_tag = f"cwim_{safe_name}_{user.id}"
+        flow = server.config_flow or "xtls-rprx-vision"
 
-        xui_uuid = await create_xui_client(server, email_tag, traffic_limit_gb, duration)
+        xui_uuid = await create_xui_client(server, email_tag, traffic_limit_gb, duration, flow=flow)
         if not xui_uuid:
             continue
 

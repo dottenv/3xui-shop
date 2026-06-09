@@ -34,8 +34,8 @@ async def fetch_panel_links_api(server: Server, email: str) -> list[str]:
 
 
 async def fetch_panel_links_public(server: Server, email: str) -> list[str]:
-    base = f"https://{server.host}:{server.port}"
-    url = f"{base}/sub/{email}"
+    sub_port = server.sub_port or server.port or 443
+    url = f"https://{server.host}:{sub_port}/sub/{email}"
 
     try:
         async with httpx.AsyncClient(verify=False, timeout=15) as client:
