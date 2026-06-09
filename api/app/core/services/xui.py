@@ -156,7 +156,13 @@ class XuiClient:
 
     async def get_sub_links(self, sub_id: str) -> list:
         data = await self._api_get(f"/panel/api/clients/subLinks/{sub_id}")
-        return data.get("obj", [])
+        obj = data.get("obj", [])
+        if isinstance(obj, dict):
+            link = obj.get("link", "")
+            return [link] if link else []
+        if isinstance(obj, list):
+            return obj
+        return []
 
     async def get_clients(self) -> list:
         data = await self._api_get("/panel/api/clients/list")
