@@ -78,7 +78,7 @@ async def get_subscription(user: User = Depends(get_current_user)):
         "days_left": days_left,
         "servers": servers_info,
         "server_count": len(servers_info),
-        "sub_url": f"https://{settings.APP_DOMAIN}/sub/{user.uuid}",
+        "sub_url": f"https://{settings.APP_DOMAIN}/api/sub/{user.uuid}",
     }
 
 

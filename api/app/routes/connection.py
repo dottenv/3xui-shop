@@ -13,7 +13,7 @@ async def get_connection(
     app: str = Query("hiddify", description="VPN client app"),
     user: User = Depends(get_current_user),
 ):
-    sub_url = f"https://{settings.APP_DOMAIN}/sub/{user.uuid}"
+    sub_url = f"https://{settings.APP_DOMAIN}/api/sub/{user.uuid}"
     encoded = quote(sub_url, safe="")
     label = quote(user.email or "VPN", safe="")
 
