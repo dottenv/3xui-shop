@@ -11,7 +11,7 @@ from app.core.security import (
     decode_token,
 )
 from app.core.models import Admin, User, Server, Transaction, Subscription, IpWhitelist
-from app.core.services.xui import XuiService, build_base_url, generate_reality_keys, generate_uuid
+from app.core.services.xui import XuiClient, build_base_url, generate_reality_keys, generate_uuid, make_inbound_payload
 
 router = APIRouter()
 admin_bearer = HTTPBearer(auto_error=False)
@@ -350,45 +350,18 @@ async def create_server(body: ServerCreateRequest, admin: Admin = Depends(get_cu
 
     private_key, public_key = generate_reality_keys()
     short_id = os.urandom(4).hex()
-
     sni = data.get("config_sni") or "www.microsoft.com"
 
-    inbound_payload = {
-        "enable": True,
-        "remark": f"{server.name}-{server.port or 443}",
-        "listen": "",
-        "port": server.port or 443,
-        "protocol": "vless",
-        "expiryTime": 0,
-        "total": 0,
-        "settings": {
-            "clients": [],
-            "decryption": "none",
-            "fallbacks": [],
-        },
-        "streamSettings": {
-            "network": "xhttp",
-            "security": "reality",
-            "realitySettings": {
-                "dest": f"{sni}:443",
-                "serverNames": [sni],
-                "privateKey": private_key,
-                "shortIds": [short_id],
-                "spiderX": "/",
-            },
-            "xhttpSettings": {
-                "mode": "packet-up",
-                "path": "/",
-                "host": "",
-            },
-        },
-        "sniffing": {
-            "enabled": True,
-            "destOverride": ["http", "tls", "quic"],
-        },
-    }
+    inbound_payload = make_inbound_payload(
+        server_name=server.name,
+        port=server.port or 443,
+        protocol="vless",
+        sni=sni,
+        private_key=private_key,
+        short_ids=[short_id],
+    )
 
-    xui = XuiService(
+    xui = XuiClient(
         base_url=build_base_url(server.host, server.port, server.xui_url),
         username=server.xui_username,
         password=server.xui_password,
@@ -456,7 +429,7 @@ async def test_server_connection(server_id: int, admin: Admin = Depends(get_curr
     server = await Server.get_or_none(id=server_id)
     if not server:
         raise HTTPException(status_code=404, detail="Server not found")
-    xui = XuiService(
+    xui = XuiClient(
         base_url=build_base_url(server.host, server.port, server.xui_url),
         username=server.xui_username,
         password=server.xui_password,
@@ -503,15 +476,13 @@ async def revoke_subscription(sub_id: int, admin: Admin = Depends(get_current_ad
         server = await Server.get_or_none(id=sub.server_id)
         if server:
             try:
-                xui = XuiService(
+                xui = XuiClient(
                     base_url=build_base_url(server.host, server.port, server.xui_url),
                     username=server.xui_username,
                     password=server.xui_password,
                     api_token=server.xui_api_token,
                 )
-                safe_name = server.name.replace(" ", "_").replace("/", "_")[:20]
-                email = f"cwim_{safe_name}_{sub.user_id}"
-                await xui._client.delete_client(email=email)
+                await xui.delete_client(email=sub.client_email)
                 await xui.close()
             except Exception:
                 pass  # client may not exist on XUI
@@ -526,14 +497,14 @@ async def clean_depleted(server_id: int, admin: Admin = Depends(get_current_admi
     server = await Server.get_or_none(id=server_id)
     if not server:
         raise HTTPException(status_code=404, detail="Server not found")
-    xui = XuiService(
+    xui = XuiClient(
         base_url=build_base_url(server.host, server.port, server.xui_url),
         username=server.xui_username,
         password=server.xui_password,
         api_token=server.xui_api_token,
     )
     try:
-        await xui.clean_depleted(server.inbound_id)
+        await xui.clean_depleted()
         return {"detail": "Depleted clients cleaned"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -593,7 +564,7 @@ async def fetch_server_inbounds(server_id: int, admin: Admin = Depends(get_curre
     server = await Server.get_or_none(id=server_id)
     if not server:
         raise HTTPException(status_code=404, detail="Server not found")
-    xui = XuiService(
+    xui = XuiClient(
         base_url=build_base_url(server.host, server.port, server.xui_url),
         username=server.xui_username,
         password=server.xui_password,
@@ -613,7 +584,7 @@ async def restart_server_xray(server_id: int, admin: Admin = Depends(get_current
     server = await Server.get_or_none(id=server_id)
     if not server:
         raise HTTPException(status_code=404, detail="Server not found")
-    xui = XuiService(
+    xui = XuiClient(
         base_url=build_base_url(server.host, server.port, server.xui_url),
         username=server.xui_username,
         password=server.xui_password,

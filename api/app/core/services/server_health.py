@@ -1,20 +1,21 @@
 import asyncio
 import logging
 from app.core.models import Server
-from app.core.services.xui import XuiService, build_base_url
+from app.core.services.xui import XuiClient, build_base_url
 
 logger = logging.getLogger("server_health")
 
-POLL_INTERVAL = 60  # seconds
+POLL_INTERVAL = 60
 
 
 async def check_server(server: Server):
     try:
-        xui = XuiService(
+        xui = XuiClient(
             base_url=build_base_url(server.host, server.port, server.xui_url),
             username=server.xui_username,
             password=server.xui_password,
             api_token=server.xui_api_token,
+            timeout=10,
         )
         online = await xui.test_connection()
         clients_count = 0

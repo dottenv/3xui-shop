@@ -39,8 +39,7 @@ async def get_subscription(user: User = Depends(get_current_user)):
     latest = subs[0]
     expires = latest.expires_at
     if expires.tzinfo is None:
-        from datetime import timezone as tz
-        expires = expires.replace(tzinfo=tz.utc)
+        expires = expires.replace(tzinfo=timezone.utc)
     days_left = max(0, (expires - now).days)
 
     if days_left == 0 and expires < now:
@@ -100,48 +99,30 @@ async def get_subscriptions(user: User = Depends(get_current_user)):
 
 @router.get("/subscription/config")
 async def get_subscription_config(user: User = Depends(get_current_user)):
+    from app.routes.subscription import fetch_all_server_links
+
     subs = await Subscription.filter(user_id=user.id, is_active=True).order_by("-expires_at").all()
-    if not subs:
-        raise HTTPException(status_code=404, detail="Нет активной подписки")
-
-    from app.routes.subscription import fetch_panel_links, tag_link
-
-    all_servers = []
-    for sub in subs:
-        server = await Server.get_or_none(id=sub.server_id)
-        if not server or not sub.client_uuid or server.is_dedicated:
-            continue
-
-        host = server.address or server.host
-        port = server.sub_port or server.port or 443
-
-        email = sub.client_email
-        if not email:
-            safe_name = server.name.replace(" ", "_").replace("/", "_")[:20]
-            email = f"cwim_{safe_name}_{user.id}"
-
-        link = ""
-        links = await fetch_panel_links(server, email)
-        if links:
-            link = tag_link(links[0], server, sub.traffic_limit)
-
-        all_servers.append({
-            "server_name": server.name,
-            "server_flag": server.flag or "",
-            "host": host,
-            "port": port,
-            "protocol": server.protocol,
-            "client_uuid": sub.client_uuid,
-            "is_online": server.is_online,
-            "link": link,
-        })
-
-    if not all_servers:
+    servers_data = await fetch_all_server_links(user.id)
+    if not servers_data:
         raise HTTPException(status_code=404, detail="Нет доступных конфигураций")
 
+    expires_at = subs[0].expires_at.isoformat() if subs else None
     return {
-        "expires_at": subs[0].expires_at.isoformat() if subs[0].expires_at else None,
-        "servers": all_servers,
+        "expires_at": expires_at,
+        "servers": [
+            {
+                "server_id": sd["server_id"],
+                "server_name": sd["server_name"],
+                "server_flag": sd["server_flag"],
+                "host": sd["host"],
+                "port": sd["port"],
+                "protocol": sd["protocol"],
+                "client_uuid": sd["client_uuid"],
+                "is_online": sd["is_online"],
+                "link": sd["links"][0] if sd["links"] else "",
+            }
+            for sd in servers_data
+        ],
     }
 
 

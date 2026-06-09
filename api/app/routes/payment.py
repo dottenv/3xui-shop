@@ -1,14 +1,16 @@
-from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
+import asyncio
+import logging
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime, timezone, timedelta
 import uuid
-import random
 
 from app.core.models import User, Transaction, Subscription, Server
 from app.core.deps import get_current_user
-from app.core.services.xui import XuiService, build_base_url, generate_uuid
+from app.core.services.xui import XuiClient, build_base_url, generate_uuid
 
+logger = logging.getLogger("payment")
 router = APIRouter()
 
 
@@ -42,31 +44,49 @@ PLANS = {
 }
 
 
-async def create_xui_client(server: Server, email_tag: str, traffic_limit_gb: int, duration: int, flow: str = "xtls-rprx-vision") -> str:
-    xui = XuiService(
+async def create_xui_client_on_server(server: Server, email: str, client_uuid: str,
+                                      traffic_limit_gb: int, duration_days: int,
+                                      flow: str = "xtls-rprx-vision") -> None:
+    client = XuiClient(
         base_url=build_base_url(server.host, server.port, server.xui_url),
         username=server.xui_username,
         password=server.xui_password,
         api_token=server.xui_api_token,
+        timeout=15,
     )
-    client_id = generate_uuid()
     try:
-        existing = await xui.get_client_by_email(email_tag)
+        existing = await client.get_client_by_email(email)
         if existing:
-            await xui._client.delete_client(email=email_tag)
-        await xui.add_client(
-            inbound_id=server.inbound_id,
-            email=email_tag,
-            client_uuid=client_id,
-            traffic_limit_gb=0,
-            expire_days=duration,
+            await client.delete_client(email)
+        await client.add_client(
+            inbound_ids=[server.inbound_id],
+            email=email,
+            client_id=client_uuid,
+            traffic_limit_bytes=0,
+            expiry_time_ms=int((datetime.now(timezone.utc).timestamp() + duration_days * 86400) * 1000),
             flow=flow,
+            sub_id=email,
+            limit_ip=0,
+            enable=True,
         )
-        return client_id
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"3X-UI {server.name}: {str(e)}")
     finally:
-        await xui.close()
+        await client.close()
+
+
+async def delete_remote_client(server: Server, email: str) -> None:
+    client = XuiClient(
+        base_url=build_base_url(server.host, server.port, server.xui_url),
+        username=server.xui_username,
+        password=server.xui_password,
+        api_token=server.xui_api_token,
+        timeout=10,
+    )
+    try:
+        await client.delete_client(email)
+    except Exception:
+        pass
+    finally:
+        await client.close()
 
 
 async def issue_subscription(user: User, plan_id: str) -> list[Subscription]:
@@ -78,7 +98,6 @@ async def issue_subscription(user: User, plan_id: str) -> list[Subscription]:
     if not servers:
         raise HTTPException(status_code=503, detail="Нет доступных серверов")
 
-    # Check existing shared subscription
     existing_shared = await Subscription.filter(
         user_id=user.id, is_active=True
     ).all()
@@ -93,38 +112,54 @@ async def issue_subscription(user: User, plan_id: str) -> list[Subscription]:
     now = datetime.now(timezone.utc)
     duration = plan["duration_days"]
     expires_at = now + timedelta(days=duration)
-    traffic_limit_gb = 0
-    created = []
+
+    created_subs = []
+    created_clients = []
 
     for server in servers:
         safe_name = server.name.replace(" ", "_").replace("/", "_")[:20]
         email_tag = f"cwim_{safe_name}_{user.id}"
+        client_uuid = generate_uuid()
         flow = server.config_flow or "xtls-rprx-vision"
 
-        xui_uuid = await create_xui_client(server, email_tag, traffic_limit_gb, duration, flow=flow)
-        if not xui_uuid:
-            continue
+        try:
+            await create_xui_client_on_server(
+                server, email_tag, client_uuid,
+                traffic_limit_gb=0, duration_days=duration, flow=flow,
+            )
 
-        sub = await Subscription.create(
-            user_id=user.id,
-            plan_id=plan_id,
-            server_id=server.id,
-            client_uuid=xui_uuid,
-            client_email=email_tag,
-            devices=plan["devices"],
-            duration_days=duration,
-            traffic_limit=traffic_limit_gb * 1024 * 1024 * 1024,
-            starts_at=now,
-            expires_at=expires_at,
-        )
-        server.current_clients += 1
-        await server.save()
-        created.append(sub)
+            sub = await Subscription.create(
+                user_id=user.id,
+                plan_id=plan_id,
+                server_id=server.id,
+                client_uuid=client_uuid,
+                client_email=email_tag,
+                devices=plan["devices"],
+                duration_days=duration,
+                traffic_limit=0,
+                starts_at=now,
+                expires_at=expires_at,
+            )
+            server.current_clients += 1
+            await server.save()
 
-    if not created:
+            created_subs.append(sub)
+            created_clients.append((server, email_tag))
+        except Exception as e:
+            logger.error("Failed to create client on server %s: %s", server.name, e)
+            for srv, eml in created_clients:
+                await delete_remote_client(srv, eml)
+            for s in created_subs:
+                await s.delete()
+            raise HTTPException(
+                status_code=502,
+                detail=f"Ошибка создания на сервере {server.name}: {str(e)}"
+            )
+
+    if not created_subs:
         raise HTTPException(status_code=500, detail="Не удалось создать подписку ни на одном сервере")
 
-    return created
+    return created_subs
 
 
 @router.get("/plans")
@@ -163,7 +198,6 @@ async def create_payment(body: CreatePaymentRequest,
     payment_id = uuid.uuid4()
     now = datetime.now(timezone.utc)
 
-    # Reserve funds
     user.balance = round(balance - price, 2)
     await user.save()
 
