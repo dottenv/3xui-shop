@@ -4,6 +4,16 @@ import { CardSkeleton } from '../ui'
 import { Link, useNavigate } from 'react-router-dom'
 import { useConfig } from '../ConfigContext'
 
+const STORAGE_KEY = 'preferred_vpn_app'
+const DEFAULT_APP = 'hiddify'
+
+function getPreferredApp() {
+  return localStorage.getItem(STORAGE_KEY) || DEFAULT_APP
+}
+function setPreferredApp(app) {
+  localStorage.setItem(STORAGE_KEY, app)
+}
+
 const planLabels = {
   start: 'Старт',
   optimal: 'Оптимальный',
@@ -24,20 +34,30 @@ export default function Dashboard() {
   const [subLoading, setSubLoading] = useState(true)
   const [servers, setServers] = useState([])
   const [history, setHistory] = useState([])
+  const [apps, setApps] = useState([])
+  const [showAppPicker, setShowAppPicker] = useState(false)
+  const [preferredApp, setPreferredAppState] = useState(getPreferredApp)
 
   const [balance, setBalance] = useState(0)
+
+  function changeApp(app) {
+    setPreferredApp(app)
+    setPreferredAppState(app)
+    setShowAppPicker(false)
+  }
 
   async function load() {
     try { setSub(await apiJson('/user/subscription')) } catch {} finally { setSubLoading(false) }
     apiJson('/user/servers').then(setServers).catch(() => {})
     apiJson('/payment/history').then(setHistory).catch(() => {})
     apiJson('/user/balance').then(d => setBalance(d.balance)).catch(() => {})
+    apiJson('/connection/apps').then(setApps).catch(() => {})
   }
   useEffect(() => { load() }, [])
 
   async function connectVpn() {
     try {
-      const data = await apiJson('/connection?app=hiddify')
+      const data = await apiJson(`/connection?app=${preferredApp}`)
       window.location.href = data.deep_link
     } catch {
       navigate('/config')
@@ -84,6 +104,28 @@ export default function Dashboard() {
               <button onClick={connectVpn} className="block w-full bg-primary text-white rounded-xl py-3 text-sm font-medium text-center hover:bg-primary-dark transition-colors shadow-lg shadow-primary/20">
                 Подключиться
               </button>
+              <div className="relative">
+                <button onClick={() => setShowAppPicker(p => !p)} className="w-full flex items-center justify-center gap-1.5 text-xs text-muted hover:text-primary transition-colors py-1">
+                  Через {apps.find(a => a.id === preferredApp)?.name || preferredApp}
+                  <svg className={`w-3 h-3 transition-transform ${showAppPicker ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {showAppPicker && (
+                  <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-surface border border-border rounded-xl shadow-xl z-10 py-1 min-w-[140px]">
+                    {apps.map(a => (
+                      <button key={a.id} onClick={() => changeApp(a.id)} className={`w-full text-left px-3 py-2 text-xs hover:bg-bg transition-colors flex items-center gap-2 ${a.id === preferredApp ? 'text-primary font-medium' : 'text-muted'}`}>
+                        {a.name}
+                        {a.id === preferredApp && (
+                          <svg className="w-3.5 h-3.5 ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           ) : (
             <div className="space-y-3">

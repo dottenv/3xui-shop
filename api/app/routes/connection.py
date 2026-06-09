@@ -19,6 +19,8 @@ async def get_connection(
 
     if app == "hiddify":
         deep_link = f"hiddify://import/{sub_url}#{label}"
+    elif app == "happ":
+        deep_link = f"happ://add/{sub_url}"
     elif app == "v2rayng":
         deep_link = f"v2rayng://install-config/?url={encoded}"
     elif app == "nekobox":
@@ -35,6 +37,7 @@ async def get_connection(
 
 APPS_INFO = [
     {"id": "hiddify", "name": "Hiddify", "icon": "hiddify"},
+    {"id": "happ", "name": "Happ", "icon": "happ"},
     {"id": "v2rayng", "name": "v2rayNG", "icon": "v2rayng"},
     {"id": "nekobox", "name": "NekoBox", "icon": "nekobox"},
     {"id": "singbox", "name": "Sing-box", "icon": "singbox"},
