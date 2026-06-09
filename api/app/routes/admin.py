@@ -11,7 +11,7 @@ from app.core.security import (
     decode_token,
 )
 from app.core.models import Admin, User, Server, Transaction, Subscription, IpWhitelist
-from app.core.services.xui import XuiClient, build_base_url, generate_reality_keys, generate_uuid, make_inbound_payload
+from app.core.services.xui import XuiClient, build_panel_url, generate_reality_keys, generate_uuid, make_inbound_payload
 
 router = APIRouter()
 admin_bearer = HTTPBearer(auto_error=False)
@@ -353,7 +353,7 @@ async def create_server(body: ServerCreateRequest, admin: Admin = Depends(get_cu
     sni = data.get("config_sni") or "www.microsoft.com"
 
     inbound_payload = make_inbound_payload(
-        server_name=server.name,
+        name=server.name,
         port=server.port or 443,
         protocol="vless",
         sni=sni,
@@ -362,7 +362,7 @@ async def create_server(body: ServerCreateRequest, admin: Admin = Depends(get_cu
     )
 
     xui = XuiClient(
-        base_url=build_base_url(server.host, server.port, server.xui_url),
+        base_url=build_panel_url(server.host, server.port, server.xui_url),
         username=server.xui_username,
         password=server.xui_password,
         api_token=server.xui_api_token,
@@ -430,7 +430,7 @@ async def test_server_connection(server_id: int, admin: Admin = Depends(get_curr
     if not server:
         raise HTTPException(status_code=404, detail="Server not found")
     xui = XuiClient(
-        base_url=build_base_url(server.host, server.port, server.xui_url),
+        base_url=build_panel_url(server.host, server.port, server.xui_url),
         username=server.xui_username,
         password=server.xui_password,
         api_token=server.xui_api_token,
@@ -477,7 +477,7 @@ async def revoke_subscription(sub_id: int, admin: Admin = Depends(get_current_ad
         if server:
             try:
                 xui = XuiClient(
-                    base_url=build_base_url(server.host, server.port, server.xui_url),
+                    base_url=build_panel_url(server.host, server.port, server.xui_url),
                     username=server.xui_username,
                     password=server.xui_password,
                     api_token=server.xui_api_token,
@@ -498,7 +498,7 @@ async def clean_depleted(server_id: int, admin: Admin = Depends(get_current_admi
     if not server:
         raise HTTPException(status_code=404, detail="Server not found")
     xui = XuiClient(
-        base_url=build_base_url(server.host, server.port, server.xui_url),
+        base_url=build_panel_url(server.host, server.port, server.xui_url),
         username=server.xui_username,
         password=server.xui_password,
         api_token=server.xui_api_token,
@@ -565,7 +565,7 @@ async def fetch_server_inbounds(server_id: int, admin: Admin = Depends(get_curre
     if not server:
         raise HTTPException(status_code=404, detail="Server not found")
     xui = XuiClient(
-        base_url=build_base_url(server.host, server.port, server.xui_url),
+        base_url=build_panel_url(server.host, server.port, server.xui_url),
         username=server.xui_username,
         password=server.xui_password,
         api_token=server.xui_api_token,
@@ -585,7 +585,7 @@ async def restart_server_xray(server_id: int, admin: Admin = Depends(get_current
     if not server:
         raise HTTPException(status_code=404, detail="Server not found")
     xui = XuiClient(
-        base_url=build_base_url(server.host, server.port, server.xui_url),
+        base_url=build_panel_url(server.host, server.port, server.xui_url),
         username=server.xui_username,
         password=server.xui_password,
         api_token=server.xui_api_token,
