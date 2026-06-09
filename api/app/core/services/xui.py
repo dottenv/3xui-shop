@@ -154,10 +154,6 @@ class XuiClient:
         data = await self._api_get(f"/panel/api/clients/links/{email}")
         return data.get("obj", [])
 
-    async def get_sub_links(self, sub_id: str) -> list:
-        data = await self._api_get(f"/panel/api/clients/subLinks/{sub_id}")
-        return data.get("obj", [])
-
     async def get_clients(self) -> list:
         data = await self._api_get("/panel/api/clients/list")
         return data.get("obj", [])
@@ -297,10 +293,6 @@ class XuiService:
 
     async def get_client_links(self, email: str) -> list:
         return await self._client.get_client_links(email)
-
-    async def get_sub_links(self, sub_id: str) -> list:
-        return await self._client.get_sub_links(sub_id)
-
 
 def get_panel_base_url(server) -> str:
     url = (server.xui_url or f"https://{server.host}:{server.port}").rstrip("/")

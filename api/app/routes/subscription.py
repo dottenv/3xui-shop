@@ -1,12 +1,32 @@
 import base64
 import json
+import httpx
 from fastapi import APIRouter, HTTPException, Response
 from typing import Optional
 
 from app.core.models import User, Subscription, Server
-from app.core.services.xui import XuiService, build_base_url
 
 router = APIRouter()
+
+
+async def fetch_panel_links(server: Server, email: str) -> list[str]:
+    base = (server.xui_url or f"https://{server.host}:{server.port}").rstrip("/")
+    if not base.startswith("http"):
+        base = f"https://{base}"
+    url = f"{base}/sub/{email}"
+
+    async with httpx.AsyncClient(verify=False, timeout=15) as client:
+        resp = await client.get(url)
+
+    if resp.status_code != 200:
+        return []
+
+    try:
+        decoded = base64.b64decode(resp.text).decode()
+    except Exception:
+        return []
+
+    return [line.strip() for line in decoded.split("\n") if line.strip()]
 
 
 @router.get("/{user_uuid}")
@@ -33,7 +53,6 @@ async def public_subscription(user_uuid: str, format: Optional[str] = "base64"):
         if not server or server.is_dedicated:
             continue
 
-        # aggregate traffic & expiry
         total_down += sub.traffic_down or 0
         total_up += sub.traffic_up or 0
         total_limit += sub.traffic_limit or 0
@@ -42,25 +61,16 @@ async def public_subscription(user_uuid: str, format: Optional[str] = "base64"):
             if ts > max_expire:
                 max_expire = ts
 
-        # build panel client and fetch config links
         email = sub.client_email
         if not email:
             safe_name = server.name.replace(" ", "_").replace("/", "_")[:20]
             email = f"cwim_{safe_name}_{user.id}"
 
-        xui = XuiService(
-            base_url=build_base_url(server.host, server.port, server.xui_url),
-            username=server.xui_username,
-            password=server.xui_password,
-            api_token=server.xui_api_token,
-        )
         try:
-            links = await xui.get_sub_links(email)
+            links = await fetch_panel_links(server, email)
             all_links.extend(links)
         except Exception:
             pass
-        finally:
-            await xui.close()
 
     if not all_links:
         raise HTTPException(status_code=404, detail="No configs available")

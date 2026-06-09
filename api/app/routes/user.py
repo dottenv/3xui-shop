@@ -104,7 +104,7 @@ async def get_subscription_config(user: User = Depends(get_current_user)):
     if not subs:
         raise HTTPException(status_code=404, detail="Нет активной подписки")
 
-    from app.core.services.xui import XuiService, build_base_url
+    from app.routes.subscription import fetch_panel_links
 
     all_servers = []
     for sub in subs:
@@ -121,20 +121,12 @@ async def get_subscription_config(user: User = Depends(get_current_user)):
             email = f"cwim_{safe_name}_{user.id}"
 
         link = ""
-        xui = XuiService(
-            base_url=build_base_url(server.host, server.port, server.xui_url),
-            username=server.xui_username,
-            password=server.xui_password,
-            api_token=server.xui_api_token,
-        )
         try:
-            links = await xui.get_sub_links(email)
+            links = await fetch_panel_links(server, email)
             if links:
                 link = links[0]
         except Exception:
             pass
-        finally:
-            await xui.close()
 
         all_servers.append({
             "server_name": server.name,
